@@ -35,6 +35,7 @@ export class MockAIService implements AIService {
       estimatedTimeMinutes: template.estimatedTimeMinutes,
       difficulty: template.difficulty,
       warnings: template.warnings,
+      followUpQuestions: [],
       risk,
       recommendsProfessional: shouldRecommendProfessional(risk),
       imageUri: request.imageUri,
@@ -58,7 +59,14 @@ function inferCategory(context?: string): ProblemCategory {
 
 type Template = Omit<
   AnalysisResult,
-  'id' | 'createdAt' | 'category' | 'risk' | 'recommendsProfessional' | 'imageUri' | 'userContext'
+  | 'id'
+  | 'createdAt'
+  | 'category'
+  | 'risk'
+  | 'recommendsProfessional'
+  | 'imageUri'
+  | 'userContext'
+  | 'followUpQuestions'
 >;
 
 const TEMPLATES: Record<ProblemCategory, Template> = {

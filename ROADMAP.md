@@ -18,20 +18,48 @@ production app. Update this as phases complete or priorities shift.
 - Jest + ESLint + typecheck all green; Metro bundles clean for iOS and
   Android.
 
-## Phase 2 — Backend + real AI
+## Phase 2 — Backend + real AI (done)
 
-- Stand up the LifeFix backend (language/framework TBD at that time —
-  keep it boring: a typed HTTP API is all the mobile app needs).
-- Define `POST /v1/analyses`: multipart image + optional text context +
-  category → `AnalysisResult` JSON (shape already defined in
-  `src/types/analysis.ts`, keep the backend contract in lockstep with it).
-- Choose the AI provider(s) for image understanding + solution generation.
-  Keep the provider call fully inside the backend.
-- Move risk classification server-side, before the result is returned;
-  keep the client-side `KeywordRiskClassifier` as a defensive backstop only.
-- Swap `createAIService()` to `RemoteAIService` behind
-  `EXPO_PUBLIC_USE_REMOTE_AI`, then remove the flag once it's the only path.
-- Add basic rate limiting per plan (ties into Phase 4's entitlements).
+- Backend built as Expo Router API routes (`app/analyze+api.ts` +
+  `backend/**`), not a separate service — same repo, same dev server,
+  bundled into a separate server target so client and server code can't
+  mix (verified: zero `anthropic`/`ANTHROPIC_API_KEY` references in the
+  exported client bundle for iOS or web).
+- `POST /analyze`: multipart image + optional text context + category +
+  locale → the app's existing `AnalysisResult` JSON (no new client-facing
+  schema — `backend/mapping/mapProviderOutputToAnalysisResult.ts` adapts
+  the AI provider's own structured output onto it).
+- AI provider: Anthropic's Claude (`@anthropic-ai/sdk`), behind the
+  `VisionAnalysisProvider` interface — swappable without touching
+  `analyzeHandler.ts`.
+- Risk classification now runs backend-side
+  (`backend/safety/applySafetyPolicy.ts`), taking the more severe of the
+  model's own `safetyLevel` and an independent keyword re-check — never
+  trusting the model's self-report alone. The client-side
+  `KeywordRiskClassifier` remains a defensive backstop (same module,
+  imported by both).
+- `createAIService()` now defaults to `RemoteAIService`;
+  `EXPO_PUBLIC_USE_REMOTE_AI=false` is the explicit opt-out to
+  `MockAIService` for offline dev/tests — no silent fallback the other way.
+- Rate limiting: **interface + in-memory implementation done and
+  unit-tested, but not yet actually enforcing anything** — see README
+  "What's implemented / what's not" and the carried-over task below.
+
+### Carried over from Phase 2 (not done)
+
+- **Back the rate limiter with a durable store.** Verified against the
+  running dev server: Expo Router API routes execute each request as an
+  isolated invocation, so `InMemoryRateLimiter`'s `Map` resets every
+  request, not just on restart — right now it never actually blocks
+  anything. Needs a shared store (Redis/Upstash, or a database row) behind
+  the existing `RateLimiter` interface in `backend/rateLimit/` before it
+  does anything in dev or production. This is the one loose end from
+  Phase 2 and should be picked up early in Phase 3 or 4 (whichever lands a
+  database/KV dependency first).
+- Deploying the backend for real native builds (EAS Hosting or
+  equivalent) — this phase only runs it via the Expo dev server / web
+  export. Needed before a TestFlight/Play build can call `/analyze` from
+  outside that dev server.
 
 ## Phase 3 — Real auth
 
@@ -41,6 +69,8 @@ production app. Update this as phases complete or priorities shift.
   fallback for fully offline/first-run use if product wants that.
 - Migrate any locally-anonymous history to the authenticated user on
   sign-in (or decide it stays device-local — product decision).
+- Reconcile the `X-Device-Id` rate-limit key (currently a local random id)
+  with the real authenticated user identity.
 
 ## Phase 4 — Monetization
 
@@ -73,8 +103,13 @@ production app. Update this as phases complete or priorities shift.
 
 ## Open product decisions (need input before the relevant phase starts)
 
-- Backend language/framework and hosting.
-- AI provider(s) for vision + solution generation.
+- ~~Backend language/framework~~ — decided: Expo Router API routes, same
+  repo. Hosting for native production builds (EAS Hosting vs. self-hosted
+  Node) is still open.
+- ~~AI provider for vision + solution generation~~ — decided: Anthropic
+  Claude. Revisit only if cost/quality data says otherwise later.
+- Durable store for rate limiting (Redis/Upstash vs. a database table —
+  likely whatever Phase 3/4 picks for auth/entitlements anyway).
 - Auth provider.
 - Payments provider (RevenueCat vs. direct StoreKit/Play Billing).
 - Whether device-local history should migrate to server-side storage, and

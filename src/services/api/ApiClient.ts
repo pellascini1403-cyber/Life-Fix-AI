@@ -21,7 +21,7 @@ export class ApiError extends Error {
 export class ApiClient {
   constructor(private readonly config: ApiClientConfig) {}
 
-  async request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  async request<T>(path: string, init: RequestInit = {}, timeoutMs?: number): Promise<T> {
     const token = await this.config.getAuthToken?.();
     const headers: Record<string, string> = {
       Accept: 'application/json',
@@ -32,10 +32,19 @@ export class ApiClient {
       ...((init.headers as Record<string, string>) ?? {}),
     };
 
-    const response = await fetch(`${this.config.baseUrl}${path}`, {
-      ...init,
-      headers,
-    });
+    const controller = timeoutMs ? new AbortController() : undefined;
+    const timeout = controller ? setTimeout(() => controller.abort(), timeoutMs) : undefined;
+
+    let response: Response;
+    try {
+      response = await fetch(`${this.config.baseUrl}${path}`, {
+        ...init,
+        headers,
+        signal: controller?.signal,
+      });
+    } finally {
+      if (timeout) clearTimeout(timeout);
+    }
 
     if (!response.ok) {
       const body = await response.text().catch(() => '');
@@ -50,6 +59,14 @@ export class ApiClient {
   }
 }
 
-/** No backend exists yet; this URL is a placeholder read from env so it can
- * be pointed at a real deployment without code changes. */
-export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://api.lifefix.ai';
+/**
+ * Defaults to an empty string — a relative path — which resolves against
+ * the app's own origin. That's correct as-is for web (the Expo Router
+ * `/analyze` API route is served by the same dev/production server as the
+ * app) and works for native during development too, since Expo serves the
+ * bundle and its API routes from the same Metro dev server URL. A native
+ * production build talking to a separately hosted backend (e.g. EAS
+ * Hosting) must set `EXPO_PUBLIC_API_URL` to that deployment's absolute
+ * URL — see .env.example.
+ */
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? '';

@@ -18,12 +18,13 @@ import { useAnalysisSessionStore } from '../src/state/useAnalysisSessionStore';
 import { useHistoryStore } from '../src/state/useHistoryStore';
 import { useTheme } from '../src/theme';
 import { SolutionFeedback } from '../src/types/analysis';
+import { getAnalysisErrorMessage } from '../src/utils/analysisErrorMessages';
 
 export default function ResultScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
-  const { status, result, error, reset } = useAnalysisSessionStore();
+  const { status, result, errorCode, reset } = useAnalysisSessionStore();
   const saveToHistory = useHistoryStore((s) => s.save);
   const [saved, setSaved] = useState(false);
   const [feedback, setFeedback] = useState<SolutionFeedback | null>(null);
@@ -54,7 +55,7 @@ export default function ResultScreen() {
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
         <ErrorState
           title={t('errors.genericTitle')}
-          message={error ? t(error) : t('errors.genericBody')}
+          message={errorCode ? getAnalysisErrorMessage(t, errorCode) : t('errors.genericBody')}
           retryLabel={t('common.close')}
           onRetry={close}
         />
@@ -146,6 +147,19 @@ export default function ResultScreen() {
             {result.warnings.map((warning) => (
               <Text key={warning} variant="body" color="secondary">
                 {'•'} {warning}
+              </Text>
+            ))}
+          </Card>
+        ) : null}
+
+        {result.followUpQuestions.length > 0 ? (
+          <Card>
+            <Text variant="headline" style={{ marginBottom: theme.spacing.xs }}>
+              {t('analysis.followUpQuestions')}
+            </Text>
+            {result.followUpQuestions.map((question) => (
+              <Text key={question} variant="body" color="secondary">
+                {'•'} {question}
               </Text>
             ))}
           </Card>

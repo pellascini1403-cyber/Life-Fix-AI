@@ -16,6 +16,7 @@ function buildEntry(id: string, createdAt: string): HistoryEntry {
     estimatedTimeMinutes: null,
     difficulty: 'easy',
     warnings: [],
+    followUpQuestions: [],
     risk: 'none',
     recommendsProfessional: false,
     imageUri: null,

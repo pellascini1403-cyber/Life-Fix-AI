@@ -77,7 +77,8 @@
     "askFollowUp": "Hacer otra pregunta",
     "retakePhoto": "Sacar otra foto",
     "professionalRecommended": "Te recomendamos un profesional",
-    "professionalBody": "Este problema puede implicar un riesgo. Te damos una orientación general, pero lo más seguro es que lo revise una persona cualificada."
+    "professionalBody": "Este problema puede implicar un riesgo. Te damos una orientación general, pero lo más seguro es que lo revise una persona cualificada.",
+    "followUpQuestions": "Nos ayudaría saber"
   },
   "camera": {
     "title": "Analizar problema",
@@ -95,7 +96,18 @@
     "networkTitle": "Sin conexión",
     "networkBody": "Revisá tu conexión a internet e intentá de nuevo.",
     "cameraUnavailable": "La cámara no está disponible en este dispositivo.",
-    "analysisFailed": "No pudimos analizar la imagen. Intentá con otra foto."
+    "analysisFailed": "No pudimos analizar la imagen. Intentá con otra foto.",
+    "analysis": {
+      "invalidRequest": "Algo en la solicitud no era válido. Probá de nuevo.",
+      "invalidImage": "No pudimos usar esa imagen. Probá con otra foto.",
+      "imageTooLarge": "La imagen es demasiado pesada. Probá con una foto más liviana.",
+      "timeout": "El análisis tardó demasiado. Probá de nuevo en unos segundos.",
+      "providerUnavailable": "Estamos teniendo problemas para analizar esta imagen. Intentá nuevamente en unos segundos.",
+      "invalidResponse": "No pudimos interpretar el resultado del análisis. Probá de nuevo.",
+      "rateLimited": "Hiciste muchos análisis en poco tiempo. Esperá un momento y volvé a intentar.",
+      "network": "Sin conexión a internet. Revisá tu conexión e intentá de nuevo.",
+      "unknown": "Algo salió mal. Intentá nuevamente en unos segundos."
+    }
   },
   "safety": {
     "bannerTitle": "Aviso de seguridad",

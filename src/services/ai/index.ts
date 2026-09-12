@@ -9,16 +9,20 @@ export { RemoteAIService } from './RemoteAIService';
 
 /**
  * Single place that decides which `AIService` implementation the app uses.
- * Today this always returns the mock, because the backend endpoint
- * `RemoteAIService` needs doesn't exist yet. Once it does, flip the
- * condition below (e.g. based on `EXPO_PUBLIC_USE_REMOTE_AI`) — nothing
- * else in the app needs to change, since callers only depend on the
- * `AIService` interface.
+ *
+ * Defaults to `RemoteAIService` (the real backend + AI provider) now that
+ * `POST /analyze` exists — this is the whole point of Phase 2. Set
+ * `EXPO_PUBLIC_USE_REMOTE_AI=false` to opt into `MockAIService` for local
+ * UI work, tests, or offline development; there is no automatic silent
+ * fallback to the mock in the other direction — if the real backend is
+ * misconfigured or unreachable, `RemoteAIService` throws a
+ * `ClientAnalysisError` and the app shows a real error state, rather than
+ * quietly serving fabricated results.
  */
 export function createAIService(): AIService {
-  const useRemote = process.env.EXPO_PUBLIC_USE_REMOTE_AI === 'true';
-  if (useRemote) {
-    return new RemoteAIService(new ApiClient({ baseUrl: API_BASE_URL }));
+  const useMock = process.env.EXPO_PUBLIC_USE_REMOTE_AI === 'false';
+  if (useMock) {
+    return new MockAIService();
   }
-  return new MockAIService();
+  return new RemoteAIService(new ApiClient({ baseUrl: API_BASE_URL }));
 }

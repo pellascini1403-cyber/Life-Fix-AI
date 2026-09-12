@@ -14,14 +14,18 @@ This is a real, production-track codebase, not a prototype: strict
 TypeScript, a modular service layer, and an architecture designed to reach
 the App Store and Google Play — not a demo meant to be thrown away.
 
-## Status: Phase 1
+## Status: Phase 2
 
-This phase built the foundation: project scaffold, navigation, design
-system, the three core screens, reusable components, and the *interfaces*
-for AI, auth, entitlements and analytics — with a mock AI implementation so
-the full capture → analyze → result flow works end-to-end today. See
-[What's implemented](#whats-implemented--whats-not) below for the precise
-line between what's real and what's a documented stub.
+Phase 1 built the foundation (navigation, design system, screens,
+component library). **Phase 2 adds a real backend and a real AI
+provider**: `POST /analyze` (an Expo Router API route) now receives the
+photo, calls Anthropic's Claude with a specialized system prompt, validates
+its structured JSON output against a strict schema, runs a backend-side
+safety policy on top of it, and returns the same `AnalysisResult` shape the
+UI already renders — `RemoteAIService` is the app's default `AIService`
+now, not a stub. See [What's implemented](#whats-implemented--whats-not)
+for the precise, current line between what's real and what's still a
+documented gap.
 
 ## Architecture
 
@@ -29,32 +33,101 @@ Three layers, kept strictly separate so no AI provider secret can ever ship
 inside the mobile binary:
 
 ```
-┌─────────────────────┐      ┌──────────────────┐      ┌────────────────────┐
-│   Mobile app (RN)    │ ───▶ │  LifeFix backend  │ ───▶ │   AI provider(s)   │
-│  Expo + TypeScript   │      │  (not built yet)  │      │  (not chosen yet)  │
-│  holds NO secrets    │      │  holds the keys   │      │                    │
-└─────────────────────┘      └──────────────────┘      └────────────────────┘
+┌─────────────────────┐      ┌──────────────────────┐      ┌────────────────┐
+│   Mobile app (RN)    │ ───▶ │  app/analyze+api.ts    │ ───▶ │  Claude (Anthropic) │
+│  Expo + TypeScript   │      │  + backend/**          │      │  vision + structured │
+│  holds NO secrets    │      │  holds ANTHROPIC_API_KEY│      │  JSON output         │
+└─────────────────────┘      └──────────────────────┘      └────────────────┘
 ```
 
-- **Mobile app** — this repo. Owns UI, navigation, local device state
+- **Mobile app** — everything under `app/(tabs)/`, `app/camera.tsx`,
+  `app/result.tsx`, and `src/`. Owns UI, navigation, local device state
   (history, current session), and calls only the LifeFix backend, through
-  `ApiClient`. It never talks to an AI provider SDK directly.
-- **Backend** (not implemented) — a separate service that owns: the AI
-  provider call, the safety/risk classification of AI output, auth,
-  per-plan rate limiting, and any server-side storage. This is where API
-  keys live, as environment variables / a secrets manager — never in the
-  app bundle or in git.
-- **AI provider** (not chosen) — swappable behind the backend's own
-  internal interface. The mobile app is fully insulated from this choice.
+  `ApiClient`. It never talks to an AI provider SDK directly, and never
+  imports anything from `backend/`.
+- **Backend** — `app/analyze+api.ts` (the HTTP boundary) plus everything
+  under `backend/` (the actual logic: request validation, the AI provider
+  call, response-schema validation, the safety policy, rate limiting).
+  This is where `ANTHROPIC_API_KEY` lives, read from the server's own
+  environment — never in the app bundle or in git. See "Why this split,
+  and how it's enforced" below for how that's guaranteed, not just
+  asserted.
+- **AI provider** — Anthropic's Claude (`@anthropic-ai/sdk`), the only
+  concrete implementation of `VisionAnalysisProvider` today. Swappable
+  behind that interface without touching `analyzeHandler.ts` or anything
+  upstream of it.
 
-### Why this split
+### Why this split, and how it's enforced (not just asserted)
 
 An adversary who decompiles the mobile app must never find a usable AI
-provider key. Any code path that would embed one (an AI SDK call from
-React Native, an API key in `app.json`/`.env`/`EXPO_PUBLIC_*`) is
-disallowed by construction: `RemoteAIService` only ever calls our own
-backend via `ApiClient`, and `ApiClient` only carries our own session
-token, injected by `AuthService`.
+provider key. This isn't just a convention here — it's structural:
+
+- `app/analyze+api.ts` is the **only** file the mobile client can reach
+  over HTTP; everything it imports (`backend/**`, `@anthropic-ai/sdk`,
+  `zod`) is server-only code.
+- Expo Router bundles `+api.ts` routes into a **separate server target**.
+  `npx expo export --platform web` (with `web.output: "server"`, set in
+  `app.json`) produces the client bundle and the `/analyze` function as
+  two entirely separate output files — verified by hand: grepping the
+  compiled client bundle for `anthropic` or `ANTHROPIC_API_KEY` returns
+  zero matches; the separate `server/_expo/functions/analyze+api.js` file
+  is where those references actually live. For iOS/Android, `expo export
+  --platform ios|android` doesn't include API routes in the native bundle
+  at all — same check, same zero matches.
+- `RemoteAIService` (mobile) only ever calls our own `/analyze` route via
+  `ApiClient`; it holds no provider key to leak in the first place.
+
+### The `/analyze` request/response contract
+
+`POST /analyze`, `multipart/form-data`:
+
+| Field | Required | Notes |
+|---|---|---|
+| `image` | yes | `image/jpeg`, `image/png`, `image/webp`, or `image/gif`, ≤ 8 MB |
+| `userContext` | no | free text, ≤ 500 chars |
+| `category` | no | one of the app's `ProblemCategory` values |
+| `locale` | no | `es` (default) or `en` — controls the AI's response language |
+
+Success (200): the `AnalysisResult` fields the client doesn't already own
+(everything except `imageUri`/`userContext`, which the client fills in
+itself — see "Privacy" below for why the image is never round-tripped
+back). Failure (4xx/5xx): `{ "error": { "code": "<AnalysisErrorCode>" } }`
+— see `backend/errors.ts` for the full list and status codes, and
+`src/utils/analysisErrorMessages.ts` for how the client turns a code into a
+localized, human-friendly message. The raw error message is logged
+server-side only; it never reaches the response body.
+
+### Safety, by construction — applied twice
+
+LifeFix's system prompt (`backend/aiProvider/systemPrompt.ts`) instructs
+Claude to classify every problem as `safe` / `caution` / `professional` and
+to keep instructions generic (never step-by-step) for anything in the
+`professional` tier — but **the backend never trusts that self-report
+alone**. `backend/safety/applySafetyPolicy.ts` independently re-classifies
+the model's own problem/explanation/warning text with the same
+keyword-based `riskClassifier` the client uses defensively, and takes the
+**more severe** of the two signals. If the final risk is `high`, the
+backend itself — not the model — replaces the steps with a single safe
+"see a professional" instruction and clears the materials list, regardless
+of what the model actually said. This is covered by
+`backend/__tests__/applySafetyPolicy.test.ts`, including the case where the
+model under-reports risk and the keyword pass is what catches it.
+
+### Privacy, by construction
+
+- The photo is processed in memory for the duration of one request and
+  never written to disk or a database — the backend has no image storage
+  at all right now.
+- The backend's success response does **not** include the image; the
+  client already has it locally and merges its own `imageUri` back onto
+  the response (see `RemoteAIService.analyze()`). The photo is never
+  round-tripped back over the network after upload.
+- The raw error `message` (which can include upstream provider detail)
+  never appears in an HTTP response body — only the stable `code` does
+  (see `backend/errors.ts`).
+- Nothing is saved to on-device history automatically — only after the
+  user taps "guardar en historial" on a result, and `HistoryRepository`'s
+  `remove()`/`clear()` are real, immediate deletes.
 
 ### Service abstractions (`src/services/`)
 
@@ -64,35 +137,19 @@ sites:
 
 | Interface | Purpose | Current implementation |
 |---|---|---|
-| `AIService` (+ `ImageAnalysisService`, `SolutionService`) | photo (+context) → `AnalysisResult` | `MockAIService` (dev-only, canned data) — `RemoteAIService` is scaffolded and throws until the backend endpoint exists |
+| `AIService` | photo (+context) → `AnalysisResult` | **`RemoteAIService` (default)** — calls `POST /analyze`, the real backend. `MockAIService` remains available (canned data, no network) for offline dev/tests — set `EXPO_PUBLIC_USE_REMOTE_AI=false` to use it; there is no automatic silent fallback to it if the real backend is misconfigured |
+| `VisionAnalysisProvider` (`backend/aiProvider/`) | image + context → structured provider JSON | `AnthropicVisionProvider` (Claude, via `@anthropic-ai/sdk`) — server-only |
+| `RateLimiter` (`backend/rateLimit/`) | abuse/cost guard for `/analyze` | `InMemoryRateLimiter` — **structurally complete and unit-tested, but currently a no-op in practice**; see "What's implemented / what's not" |
 | `AuthService` | current user, sign in/out | `AnonymousAuthService` (local, in-memory) |
 | `EntitlementsService` | plan, daily-use limits | `LocalEntitlementsService` (in-memory, `free` plan only) |
 | `AnalyticsService` | event tracking | `NoopAnalyticsService` |
 | `HistoryRepository` | saved analyses | `AsyncStorageHistoryRepository` (on-device only) |
-| `RiskClassifier` (`src/safety/`) | flags dangerous topics | `KeywordRiskClassifier` (defensive client-side check; the real gate belongs server-side, next to the AI call) |
+| `RiskClassifier` (`src/safety/`) | flags dangerous topics | `KeywordRiskClassifier` — used defensively client-side, and authoritatively server-side in `backend/safety/applySafetyPolicy.ts` (same module, imported by both) |
 
-Where a real implementation doesn't exist yet, the file says so explicitly
-in its doc comment (see `RemoteAIService.ts`) — nothing pretends to be
-finished.
-
-### Safety, by construction
-
-Every `AnalysisResult` carries a `risk: 'none' | 'low' | 'medium' | 'high'`
-and `recommendsProfessional: boolean`. The UI surfaces this via
-`SafetyBanner` whenever risk is medium/high, and `MockAIService` downgrades
-`confidence` to `'low'` for high-risk input. In production, this
-classification must run server-side, before the result ever reaches the
-client — the client-side `KeywordRiskClassifier` is a defensive backstop,
-never the only gate.
-
-### Privacy, by construction
-
-- Nothing is saved to history automatically — only after the user taps
-  "guardar en historial" on a result.
-- `HistoryRepository.remove()` / `.clear()` are real, immediate deletes.
-- No image is uploaded anywhere yet (there is no backend); once one
-  exists, retention must respect `EntitlementsService`'s
-  `historyRetentionDays` and support hard deletion.
+Where a real implementation doesn't exist yet, or an existing one has a
+known limitation, the file says so explicitly in its doc comment (see
+`AuthService.ts`, `backend/rateLimit/RateLimiter.ts`) — nothing pretends to
+be finished.
 
 ### Monetization, data-driven
 
@@ -116,6 +173,13 @@ seam it plugs into.
 - **expo-camera** / **expo-image-picker** for capture.
 - **@react-native-async-storage/async-storage** for local history
   persistence.
+- **Expo Router API routes** (`+api.ts`) for the backend — same repo, same
+  dev server, but bundled into a separate server target so client and
+  server code never mix (see "Why this split" above). No separate
+  service/repo to stand up or keep in sync.
+- **`@anthropic-ai/sdk`** (server-only) for the Claude call, with **`zod`**
+  validating both the AI's structured output and the incoming request
+  fields.
 - **Jest + jest-expo + @testing-library/react-native** for tests.
 - **ESLint (flat config, `eslint-config-expo`) + Prettier**.
 
@@ -126,7 +190,21 @@ app/                      Expo Router routes (screens + navigation)
   (tabs)/                 Bottom tab navigator: Home, History, Profile
   camera.tsx               Full-screen capture flow (modal)
   result.tsx                Analysis result (modal)
+  analyze+api.ts            POST /analyze — thin HTTP adapter (server-only)
   _layout.tsx              Root providers (theme, safe area, gesture handler)
+
+backend/                  Server-only. Reachable ONLY from app/analyze+api.ts —
+                          never import this from src/ or app/(tabs)/**.
+  config.ts                Env vars, model id, image/rate-limit constants
+  errors.ts                AnalysisError taxonomy (code -> HTTP status)
+  schema.ts                Zod schemas: AI provider output + request fields
+  analyzeHandler.ts         Orchestrates: rate limit -> parse/validate ->
+                           provider call -> safety policy -> response
+  aiProvider/              VisionAnalysisProvider interface + AnthropicVisionProvider
+                           + the system prompt
+  safety/                  applySafetyPolicy.ts — the authoritative safety gate
+  rateLimit/               RateLimiter interface + InMemoryRateLimiter
+  mapping/                 Provider JSON -> AnalysisResult
 
 src/
   theme/                   Design tokens (color, spacing, typography) + ThemeProvider
@@ -135,16 +213,17 @@ src/
     ui/                    Generic reusable primitives (Button, Card, Input, …)
     results/               Analysis-result-specific components
   services/
-    ai/                    AIService + ImageAnalysisService/SolutionService interfaces,
-                           MockAIService, RemoteAIService (stub)
+    ai/                    AIService interface, MockAIService, RemoteAIService
     auth/                  AuthService interface + AnonymousAuthService
     entitlements/          EntitlementsService interface + LocalEntitlementsService
     analytics/             AnalyticsService interface + NoopAnalyticsService
     api/                   ApiClient (backend HTTP client)
+    device/                Local device-id (used as the rate-limit key)
     history/               HistoryRepository interface + AsyncStorage impl
-  safety/                  RiskClassifier
+  safety/                  RiskClassifier (shared by client and backend)
   state/                   Zustand stores
-  types/                   Shared domain types (AnalysisResult, Entitlements, …)
+  types/                   Shared domain types (AnalysisResult, AnalysisErrorCode, …)
+  utils/                   analysisErrorMessages.ts — error code -> localized message
   constants/               Category list + icons
 ```
 
@@ -166,49 +245,86 @@ npm run doctor       # expo-doctor (some checks need network access to expo.dev)
 
 ## Environment variables
 
-Copy `.env.example` to `.env`. All `EXPO_PUBLIC_*` vars are bundled into
-the client — **never** put a secret in one.
+Copy `.env.example` to `.env`. Two very different kinds of variable live
+there — see the file's own header comment for the full explanation:
+`EXPO_PUBLIC_*` is bundled into the **client** (never put a secret in one);
+everything else is read only by server code (`backend/**`, imported only
+from `app/analyze+api.ts`) and is safe for real secrets.
 
-| Var | Default | Purpose |
-|---|---|---|
-| `EXPO_PUBLIC_API_URL` | `https://api.lifefix.ai` | Backend base URL (backend not built yet) |
-| `EXPO_PUBLIC_USE_REMOTE_AI` | `false` | `true` switches `createAIService()` to `RemoteAIService`, which currently throws until the backend endpoint exists |
+| Var | Where | Default | Purpose |
+|---|---|---|---|
+| `EXPO_PUBLIC_API_URL` | client | *(empty → relative)* | Backend base URL. Empty resolves as a relative path against the app's own origin, which is correct for web and for native during development (same Metro dev server serves both). Set to an absolute URL only for a native production build talking to a separately hosted backend |
+| `EXPO_PUBLIC_USE_REMOTE_AI` | client | *(unset → real backend)* | Set to `"false"` to use `MockAIService` instead (offline dev/tests). Any other value uses the real backend |
+| `ANTHROPIC_API_KEY` | server | *(none)* | **Required** for real analyses. Without it, `POST /analyze` returns `503 PROVIDER_NOT_CONFIGURED` — verified by hand (see below) — never a fabricated result |
+| `ANTHROPIC_MODEL` | server | `claude-opus-5` | Override the model used for analysis |
+| `RATE_LIMIT_PER_MINUTE` / `RATE_LIMIT_PER_DAY` | server | `8` / `60` | Abuse/cost guardrails — see the rate-limiting caveat below before relying on these |
+| `ANALYSIS_TIMEOUT_MS` | server | `45000` | Max time to wait on the AI provider before failing with `TIMEOUT` |
 
 ## What's implemented / what's not
 
-**Implemented:**
-- Navigation: bottom tabs (Home/History/Profile) + camera/result modals.
-- Design system: color/spacing/typography tokens, light/dark palettes,
-  `ThemeProvider`.
-- Full capture flow: live camera preview, gallery picker, optional text
-  context, category shortcuts.
-- Full result UI: problem/explanation, confidence, safety banner, steps,
-  materials, time, difficulty, warnings, feedback, save-to-history.
-- History: list, view a saved result again, delete one, empty state.
-- Profile: plan/usage display, language switch (es/en), menu shell.
-- i18n (es default, en), loading/error/empty states, local persistence.
-- Safety risk classification (client-side keyword layer + UI banner).
-- Unit tests for the risk classifier, entitlements limits, history
-  persistence, and a UI component.
+**Implemented and verified:**
+- Everything from Phase 1 (navigation, design system, screens, components,
+  i18n, local history/entitlements).
+- **A real backend** (`POST /analyze`, an Expo Router API route) that
+  validates the request, calls Claude with a specialized system prompt,
+  validates the AI's structured JSON output against a strict `zod` schema,
+  runs an independent backend-side safety policy on top of the model's own
+  classification, and returns the app's existing `AnalysisResult` shape —
+  no client-visible schema change.
+- **`RemoteAIService` is the default `AIService`** — verified end-to-end in
+  a real browser: Home → camera capture → `POST /analyze` → a real (non-2xx,
+  since no key is configured in this environment) response → mapped to a
+  `ClientAnalysisError` → shown as "We're having trouble analyzing this
+  image. Try again in a few seconds." — not a crash, not a fabricated
+  result. `MockAIService` still exists for offline dev/tests.
+- **The secret boundary holds** — verified by hand, not just asserted:
+  exporting the app (`expo export`, both iOS and web) confirms `anthropic`
+  and `ANTHROPIC_API_KEY` appear zero times in the client bundle, and only
+  in the separate server function bundle for web (the API-route target).
+- Structured, typed error codes end-to-end (`AnalysisErrorCode`), each
+  mapped to a specific localized (es/en) human message — one per failure
+  mode called out in the spec (invalid image, too large, timeout, provider
+  down/unconfigured, invalid AI response, rate limited, network error,
+  unknown), never a raw technical message shown to the user.
+- `followUpQuestions` — a genuinely new field end to end (schema → mapping
+  → UI card) for when the AI needs more information instead of guessing.
+
+**Structurally complete, but with a known, verified limitation:**
+- **Rate limiting.** `RateLimiter` (interface) + `InMemoryRateLimiter`
+  exist, are fully unit-tested (windowing, per-key isolation, `429` +
+  `retryAfterSeconds`), and are wired into `analyzeHandler.ts`. Verified
+  against the running dev server, though: Expo Router API routes execute
+  each request as an isolated invocation, so the in-memory `Map` resets on
+  *every* request, not just on restart — it currently allows every request
+  through. It needs a durable, shared store (Redis/Upstash, a database
+  row) behind the same `RateLimiter` interface to actually enforce
+  anything, in dev or in a serverless-style production deployment. See
+  `backend/rateLimit/RateLimiter.ts` for the detail and ROADMAP for this as
+  an open item — **this is the one piece of this phase that isn't fully
+  functional yet, only fully specified and tested in isolation.**
 
 **Explicitly NOT implemented yet** (by design, per the phased plan):
-- The backend service itself (no `/v1/analyses` endpoint exists).
-- Any real AI provider integration — `MockAIService` returns canned,
-  category-shaped results so the UI/flow can be built and tested now.
-- Real authentication (`AnonymousAuthService` is a local-only stand-in).
+- Real authentication (`AnonymousAuthService` is a local-only stand-in);
+  the `X-Device-Id` header used for rate limiting is a local random id, not
+  an authenticated identity.
 - Real payments/subscriptions (RevenueCat/StoreKit/Play Billing) and ads.
-- Server-side (authoritative) safety classification.
 - "Explicámelo más fácil" and "Escuchar solución" accessibility features.
-- Push notifications, analytics provider, remote image storage.
+- Push notifications, analytics provider, persistent image storage.
+- EAS Hosting / production deployment of the backend (this phase runs it
+  via the Expo dev server; deploying it for real native builds is next).
 
 ## Next steps
 
-1. Stand up the backend (`POST /v1/analyses`), choose the AI provider, and
-   swap `createAIService()` over to `RemoteAIService`.
-2. Real auth provider decision + implementation behind `AuthService`.
-3. Payments integration behind `EntitlementsService`.
-4. Server-side risk classification, replacing/augmenting the client-side
-   keyword layer.
-5. EAS Build configuration + first TestFlight/Play internal test track.
+1. **Set `ANTHROPIC_API_KEY`** (see .env.example) — this is the one
+   external credential needed to make real analyses work; everything else
+   in this phase is already built and wired up against it.
+2. Back the rate limiter with a durable store so it actually enforces
+   limits (see the caveat above).
+3. Real auth provider decision + implementation behind `AuthService`, and
+   reconcile the device-id rate-limit key with a real user identity.
+4. Payments integration behind `EntitlementsService`.
+5. EAS Hosting (or equivalent) deployment of the backend for native
+   production builds, plus EAS Build configuration and a first
+   TestFlight/Play internal test track.
 
 See `ROADMAP.md` for the fuller, longer-term plan.

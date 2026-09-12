@@ -36,6 +36,9 @@ export interface AnalysisResult {
   estimatedTimeMinutes: { min: number; max: number } | null;
   difficulty: DifficultyLevel;
   warnings: string[];
+  /** Questions the AI would ask to give a better answer, e.g. when the
+   * image alone wasn't enough to be confident. Empty when none apply. */
+  followUpQuestions: string[];
 
   risk: RiskLevel;
   recommendsProfessional: boolean;

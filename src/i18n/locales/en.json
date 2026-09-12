@@ -77,7 +77,8 @@
     "askFollowUp": "Ask a follow-up",
     "retakePhoto": "Retake photo",
     "professionalRecommended": "A professional is recommended",
-    "professionalBody": "This problem may carry some risk. We can offer general guidance, but it's safest to have a qualified person take a look."
+    "professionalBody": "This problem may carry some risk. We can offer general guidance, but it's safest to have a qualified person take a look.",
+    "followUpQuestions": "It would help to know"
   },
   "camera": {
     "title": "Analyze problem",
@@ -95,7 +96,18 @@
     "networkTitle": "No connection",
     "networkBody": "Check your internet connection and try again.",
     "cameraUnavailable": "The camera isn't available on this device.",
-    "analysisFailed": "We couldn't analyze the image. Try another photo."
+    "analysisFailed": "We couldn't analyze the image. Try another photo.",
+    "analysis": {
+      "invalidRequest": "Something about that request wasn't valid. Please try again.",
+      "invalidImage": "We couldn't use that image. Try another photo.",
+      "imageTooLarge": "That image is too large. Try a lighter photo.",
+      "timeout": "The analysis took too long. Please try again in a few seconds.",
+      "providerUnavailable": "We're having trouble analyzing this image. Try again in a few seconds.",
+      "invalidResponse": "We couldn't make sense of the analysis result. Please try again.",
+      "rateLimited": "You've run a lot of analyses in a short time. Wait a moment and try again.",
+      "network": "No internet connection. Check your connection and try again.",
+      "unknown": "Something went wrong. Please try again in a few seconds."
+    }
   },
   "safety": {
     "bannerTitle": "Safety notice",
