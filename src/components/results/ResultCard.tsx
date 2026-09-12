@@ -15,24 +15,25 @@ export interface ResultCardProps {
   onDelete?: () => void;
 }
 
-/** Compact summary of an `AnalysisResult`, used in History list rows. */
+/**
+ * Compact summary of an `AnalysisResult`, used in History list rows.
+ *
+ * The tap-to-open area and the delete button are sibling `Pressable`s
+ * rather than nested ones: on web, react-native-web renders `Pressable`
+ * as a `<button>`, and a `<button>` inside another `<button>` is invalid
+ * HTML (it breaks click handling and trips a hydration warning).
+ */
 export function ResultCard({ result, onPress, onDelete }: ResultCardProps) {
   const theme = useTheme();
 
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={result.problemTitle}>
-      <Card style={styles.card}>
-        {onDelete ? (
-          <Pressable
-            onPress={onDelete}
-            accessibilityRole="button"
-            accessibilityLabel="Eliminar"
-            hitSlop={8}
-            style={styles.deleteButton}
-          >
-            <Ionicons name="trash-outline" size={18} color={theme.colors.textTertiary} />
-          </Pressable>
-        ) : null}
+    <Card style={styles.card}>
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={result.problemTitle}
+        style={styles.pressableContent}
+      >
         {result.imageUri ? (
           <Image source={{ uri: result.imageUri }} style={[styles.thumb, { borderRadius: theme.radii.md }]} />
         ) : (
@@ -61,13 +62,27 @@ export function ResultCard({ result, onPress, onDelete }: ResultCardProps) {
             <ConfidenceBadge confidence={result.confidence} />
           </View>
         </View>
-      </Card>
-    </Pressable>
+      </Pressable>
+      {onDelete ? (
+        <Pressable
+          onPress={onDelete}
+          accessibilityRole="button"
+          accessibilityLabel="Eliminar"
+          hitSlop={8}
+          style={styles.deleteButton}
+        >
+          <Ionicons name="trash-outline" size={18} color={theme.colors.textTertiary} />
+        </Pressable>
+      ) : null}
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
+    position: 'relative',
+  },
+  pressableContent: {
     flexDirection: 'row',
     gap: 12,
   },

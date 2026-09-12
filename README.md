@@ -106,6 +106,9 @@ seam it plugs into.
 
 - **Expo (React Native) + TypeScript**, `expo-router` for file-based
   navigation — one codebase, iOS + Android, EAS Build/Submit-ready.
+  `react-dom` + `react-native-web` are included so `npm run web` also works
+  — useful for fast UI iteration and headless browser testing — though iOS
+  and Android are the actual target platforms.
 - **Zustand** for local UI/session state (`useAnalysisSessionStore`,
   `useHistoryStore`).
 - **i18next / react-i18next** for i18n (Spanish default, English), no
