@@ -1,0 +1,61 @@
+{
+  "expo": {
+    "name": "LifeFix AI",
+    "slug": "lifefix-ai",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "lifefixai",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "ai.lifefix.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "LifeFix AI necesita la cámara para fotografiar el problema que querés resolver.",
+        "NSPhotoLibraryUsageDescription": "LifeFix AI necesita acceso a tus fotos para analizar una imagen que ya tenés guardada."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#F5F3EE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "ai.lifefix.app",
+      "permissions": ["CAMERA", "READ_MEDIA_IMAGES"]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "LifeFix AI necesita la cámara para fotografiar el problema que querés resolver."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "LifeFix AI necesita acceso a tus fotos para analizar una imagen que ya tenés guardada."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#F5F3EE",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

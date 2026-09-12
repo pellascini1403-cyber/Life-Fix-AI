@@ -1,0 +1,105 @@
+{
+  "common": {
+    "appName": "LifeFix AI",
+    "cancel": "Cancel",
+    "retry": "Retry",
+    "save": "Save",
+    "delete": "Delete",
+    "close": "Close",
+    "seeAll": "See all",
+    "loading": "Loading…"
+  },
+  "tabs": {
+    "home": "Home",
+    "history": "History",
+    "profile": "Profile"
+  },
+  "home": {
+    "headline": "What's the problem?",
+    "subheadline": "Show us what's going on and we'll help you fix it.",
+    "ctaPhoto": "Analyze a problem",
+    "ctaGallery": "Choose from gallery",
+    "categoriesTitle": "Categories",
+    "category": {
+      "home": "Home",
+      "repairs": "Repairs",
+      "cleaning": "Cleaning",
+      "clothing": "Clothing",
+      "garden": "Garden",
+      "objects": "Objects",
+      "other": "Other"
+    }
+  },
+  "history": {
+    "title": "History",
+    "emptyTitle": "No analyses yet",
+    "emptyBody": "Your solved problems will show up here.",
+    "emptyCta": "Analyze a problem",
+    "deleteConfirmTitle": "Delete this analysis?",
+    "deleteConfirmBody": "This action can't be undone.",
+    "clearAll": "Clear history"
+  },
+  "profile": {
+    "title": "Profile",
+    "planFree": "Free plan",
+    "planPro": "LifeFix PRO",
+    "upgradeCta": "Upgrade to PRO",
+    "language": "Language",
+    "notifications": "Notifications",
+    "privacy": "Privacy",
+    "help": "Help",
+    "about": "About LifeFix AI",
+    "signOut": "Sign out",
+    "dailyAnalysesLeft": "{{count}} free analysis left today",
+    "dailyAnalysesLeft_one": "{{count}} free analysis left today",
+    "dailyAnalysesLeft_other": "{{count}} free analyses left today"
+  },
+  "analysis": {
+    "analyzing": "Analyzing your problem…",
+    "analyzingHint": "This can take a few seconds.",
+    "detectedProblem": "Detected problem",
+    "confidence": "Confidence level",
+    "confidenceHigh": "High",
+    "confidenceMedium": "Medium",
+    "confidenceLow": "Low",
+    "whatToDo": "What to do",
+    "youNeed": "You'll need",
+    "estimatedTime": "Estimated time",
+    "difficulty": "Difficulty",
+    "difficultyEasy": "Easy",
+    "difficultyMedium": "Medium",
+    "difficultyHard": "Hard",
+    "whatNotToDo": "What NOT to do",
+    "feedbackQuestion": "Did this solution help?",
+    "feedbackYes": "Yes",
+    "feedbackNo": "No",
+    "saveToHistory": "Save to history",
+    "askFollowUp": "Ask a follow-up",
+    "retakePhoto": "Retake photo",
+    "professionalRecommended": "A professional is recommended",
+    "professionalBody": "This problem may carry some risk. We can offer general guidance, but it's safest to have a qualified person take a look."
+  },
+  "camera": {
+    "title": "Analyze problem",
+    "permissionTitle": "We need camera access",
+    "permissionBody": "To photograph your problem, LifeFix AI needs permission to use the camera.",
+    "permissionCta": "Allow access",
+    "contextPlaceholder": "Tell us what's going on (optional)",
+    "shutterHint": "Tap to take the photo",
+    "usePhoto": "Use this photo",
+    "retake": "Retake"
+  },
+  "errors": {
+    "genericTitle": "Something went wrong",
+    "genericBody": "We couldn't complete that action. Please try again.",
+    "networkTitle": "No connection",
+    "networkBody": "Check your internet connection and try again.",
+    "cameraUnavailable": "The camera isn't available on this device.",
+    "analysisFailed": "We couldn't analyze the image. Try another photo."
+  },
+  "safety": {
+    "bannerTitle": "Safety notice",
+    "riskHigh": "This problem may be dangerous. Consult a professional before acting.",
+    "riskMedium": "Proceed with caution and follow the guidance carefully."
+  }
+}
