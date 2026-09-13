@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Badge, Button, Card, Header, Text } from '../../src/components/ui';
 import { entitlementsService } from '../../src/services/entitlements/EntitlementsService';
-import { supportedLanguages } from '../../src/i18n';
+import { changeAndPersistLanguage, supportedLanguages } from '../../src/i18n';
 import { useTheme } from '../../src/theme';
 import { Entitlements } from '../../src/types/entitlements';
 
@@ -39,9 +40,11 @@ export default function ProfileScreen() {
   const { t, i18n } = useTranslation();
   const [entitlements, setEntitlements] = useState<Entitlements | null>(null);
 
-  useEffect(() => {
-    void entitlementsService.getEntitlements().then(setEntitlements);
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      void entitlementsService.getEntitlements().then(setEntitlements);
+    }, []),
+  );
 
   const isPro = entitlements?.plan === 'pro';
   const analysesLeft = entitlements?.limits.dailyAnalyses
@@ -50,7 +53,11 @@ export default function ProfileScreen() {
 
   const toggleLanguage = () => {
     const next = i18n.language === 'es' ? 'en' : 'es';
-    void i18n.changeLanguage(next);
+    void changeAndPersistLanguage(next);
+  };
+
+  const showComingSoon = () => {
+    Alert.alert(t('profile.comingSoonTitle'), t('profile.comingSoonBody'));
   };
 
   return (
@@ -74,7 +81,7 @@ export default function ProfileScreen() {
           </View>
           {!isPro ? (
             <View style={{ marginTop: theme.spacing.md }}>
-              <Button label={t('profile.upgradeCta')} size="default" onPress={() => {}} />
+              <Button label={t('profile.upgradeCta')} size="default" onPress={showComingSoon} />
             </View>
           ) : null}
         </Card>
@@ -91,13 +98,21 @@ export default function ProfileScreen() {
             }
           />
           <View style={[styles.divider, { backgroundColor: theme.colors.borderSubtle }]} />
-          <MenuRow icon="notifications-outline" label={t('profile.notifications')} />
+          <MenuRow icon="notifications-outline" label={t('profile.notifications')} onPress={showComingSoon} />
           <View style={[styles.divider, { backgroundColor: theme.colors.borderSubtle }]} />
-          <MenuRow icon="shield-checkmark-outline" label={t('profile.privacy')} />
+          <MenuRow
+            icon="shield-checkmark-outline"
+            label={t('profile.privacy')}
+            onPress={() => router.push('/privacy')}
+          />
           <View style={[styles.divider, { backgroundColor: theme.colors.borderSubtle }]} />
-          <MenuRow icon="help-circle-outline" label={t('profile.help')} />
+          <MenuRow icon="help-circle-outline" label={t('profile.help')} onPress={() => router.push('/help')} />
           <View style={[styles.divider, { backgroundColor: theme.colors.borderSubtle }]} />
-          <MenuRow icon="information-circle-outline" label={t('profile.about')} />
+          <MenuRow
+            icon="information-circle-outline"
+            label={t('profile.about')}
+            onPress={() => router.push('/about')}
+          />
         </Card>
       </ScrollView>
     </View>

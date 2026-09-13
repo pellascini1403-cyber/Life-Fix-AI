@@ -37,7 +37,14 @@
     "emptyCta": "Analyze a problem",
     "deleteConfirmTitle": "Delete this analysis?",
     "deleteConfirmBody": "This action can't be undone.",
-    "clearAll": "Clear history"
+    "clearAll": "Clear history",
+    "clearAllConfirmTitle": "Clear your entire history?",
+    "clearAllConfirmBody": "All saved analyses will be deleted. This action can't be undone.",
+    "loadErrorBody": "We couldn't load your history. Please try again.",
+    "saveError": "We couldn't save this analysis. Please try again.",
+    "deleteError": "We couldn't delete this analysis. Please try again.",
+    "clearError": "We couldn't clear your history. Please try again.",
+    "feedbackError": "We couldn't save your feedback. Please try again."
   },
   "profile": {
     "title": "Profile",
@@ -52,7 +59,9 @@
     "signOut": "Sign out",
     "dailyAnalysesLeft": "{{count}} free analysis left today",
     "dailyAnalysesLeft_one": "{{count}} free analysis left today",
-    "dailyAnalysesLeft_other": "{{count}} free analyses left today"
+    "dailyAnalysesLeft_other": "{{count}} free analyses left today",
+    "comingSoonTitle": "Coming soon",
+    "comingSoonBody": "This feature isn't available yet. We're getting it ready for an upcoming update."
   },
   "analysis": {
     "analyzing": "Analyzing your problem…",
@@ -104,6 +113,7 @@
     "networkBody": "Check your internet connection and try again.",
     "cameraUnavailable": "The camera isn't available on this device.",
     "analysisFailed": "We couldn't analyze the image. Try another photo.",
+    "galleryError": "We couldn't open the gallery. Please try again.",
     "analysis": {
       "invalidRequest": "Something about that request wasn't valid. Please try again.",
       "invalidImage": "We couldn't use that image. Try another photo.",
@@ -120,5 +130,53 @@
     "bannerTitle": "Safety notice",
     "riskHigh": "This problem may be dangerous. Consult a professional before acting.",
     "riskMedium": "Proceed with caution and follow the guidance carefully."
+  },
+  "entitlements": {
+    "limitReachedTitle": "You've reached today's free limit",
+    "limitReachedBody": "You've used your 3 free analyses for today. You can analyze again tomorrow."
+  },
+  "about": {
+    "title": "About LifeFix AI",
+    "intro": "LifeFix AI helps you understand everyday household problems (repairs, cleaning, clothing, garden, and more) and gives you clear steps to fix them.",
+    "howItWorksTitle": "How it works today",
+    "howItWorksBody": "You take a photo or pick one from your gallery, tell us what's going on, and the app shows you a likely cause and a step-by-step guide. Right now, the analysis is generated from example data simulated inside the app, not by an online AI service.",
+    "statusTitle": "Under development",
+    "statusBody": "This is a version still under development. We're getting the architecture ready to connect a real AI-powered analysis later on, at no extra cost to you for now."
+  },
+  "privacy": {
+    "title": "Privacy",
+    "analysisTitle": "Photos and analysis",
+    "analysisBody": "Right now, your problem's analysis is generated from example data simulated inside the app itself: the photo you take or pick is never sent to any server or AI service. It's only used to show it back to you on the result screen.",
+    "historyTitle": "History",
+    "historyBody": "An analysis is only saved to your history when you tap \"Save to history\". It's stored only on this device (not on a server), and you can delete a single analysis or clear your entire history at any time from the History screen.",
+    "accountsTitle": "Accounts and personal data",
+    "accountsBody": "LifeFix AI doesn't ask you to create an account or provide personal data like your name, email, or phone number yet. The language you choose and today's free-analysis counter are also stored only on this device.",
+    "permissionsTitle": "Device permissions",
+    "permissionsBody": "The app asks for camera access to photograph your problem, and gallery access to pick an existing image. If you don't grant a permission, you simply won't be able to use that particular feature; the rest of the app keeps working."
+  },
+  "help": {
+    "title": "Help",
+    "faqs": [
+      {
+        "question": "How do I analyze a problem?",
+        "answer": "From Home, tap \"Analyze a problem\" to take a photo, or \"Choose from gallery\" to use an image you already have. You can also tap a category to jump straight to the camera with that context."
+      },
+      {
+        "question": "How many free analyses do I get per day?",
+        "answer": "You get 3 free analyses per day. The counter resets automatically when a new day starts."
+      },
+      {
+        "question": "How do I save a result to my history?",
+        "answer": "On the result screen, tap \"Save to history\". You'll be able to view, rate, or delete it later from the History tab."
+      },
+      {
+        "question": "How do I change the app's language?",
+        "answer": "Go to Profile and tap \"Language\" to switch between Spanish and English. The app will remember your choice next time you open it."
+      },
+      {
+        "question": "What happens if I deny camera or gallery access?",
+        "answer": "You can keep using the rest of the app as normal. You'll only need to grant that permission when you want to use that specific feature."
+      }
+    ]
   }
 }

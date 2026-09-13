@@ -127,6 +127,60 @@ never match a Spanish word ending in an accented vowel (`\b` treats
 written against real app content, fixed by tokenizing on letter runs
 instead of relying on `\b`.
 
+## Phase 5.5 — Hardening & stability (done)
+
+A cost-conscious stabilization pass, done entirely without touching
+`RemoteAIService`, `MockAIService`, the safety system, real auth, or
+monetization — the goal was to make everything already built actually solid
+before adding anything new.
+
+- **Daily free-analysis limit, actually enforced.** `LocalEntitlementsService`
+  now persists `analysesUsedToday` + the local calendar date to AsyncStorage
+  (previously in-memory only, reset every app launch, and never actually
+  checked before this phase). A new `useDailyLimitGuard()` hook wraps
+  `canRunAnalysis()` with a plain informational alert (no paywall, no
+  purchase flow) and gates both of Home's entry points (`openCamera`,
+  `pickFromGallery`) and Camera's `confirmPhoto`. The counter resets
+  automatically the first time it's read on a new local day. Profile's
+  existing "N free analyses left today" display now actually reflects
+  real usage — it refreshes on tab focus (`useFocusEffect`) instead of once
+  on first mount, which a first pass of manual testing caught showing a
+  stale count after using all 3.
+- **Real error handling across history.** Every `useHistoryStore` mutation
+  (`save`, `setFeedback`, `remove`, `clear`) now catches its own failures
+  and returns a boolean instead of throwing silently; callers show a
+  localized `Alert` on failure. The History screen's load-error state,
+  which previously fell through to the empty-state UI (misleading — a
+  storage failure looked identical to "no history yet"), now shows a real
+  `ErrorState` with retry. A "Clear history" action was added to the
+  screen header (only shown when there's something to clear). Result's
+  👍/👎 feedback buttons, previously local-only component state that never
+  reached the history store, now actually persist via `setFeedback` when
+  the result is already saved.
+- **Unified gallery picker.** `src/services/media/pickImageFromGallery.ts`
+  replaces two independently-drifted copies of the same permission-request
+  + pick logic in Home and Camera (one alerted on permission denial, the
+  other didn't; neither handled an unexpected picker error) with one
+  shared, fully-covered implementation.
+- **Language persistence.** The selected language now survives an app
+  restart (`src/i18n/index.ts`: `changeAndPersistLanguage` /
+  `loadPersistedLanguage`, backed by AsyncStorage) instead of resetting to
+  the device locale every launch.
+- **No more dead buttons in Profile.** "Pasar a PRO" and "Notificaciones"
+  now show an honest "coming soon" message instead of doing nothing — no
+  payment logic anywhere. "Ayuda", "Acerca de LifeFix AI", and "Privacidad"
+  are now real screens (`app/help.tsx`, `app/about.tsx`, `app/privacy.tsx`).
+  Privacy's copy is deliberately scoped to only what the app actually does
+  right now (simulated on-device analysis, opt-in local-only history,
+  no accounts, the two device permissions it requests) — nothing about a
+  future real-AI backend is described as already happening.
+- **Tests:** 77 → 100 (new coverage for entitlements persistence/daily
+  reset, `useHistoryStore`'s success/error paths, the gallery picker, and
+  language persistence/restore), plus a clean `tsc --noEmit` and
+  `eslint .`. Verified manually end-to-end via headless-browser screenshots
+  (daily-limit gate blocking a 4th analysis, the three new Profile screens,
+  Clear history).
+
 ## Phase 6 — Store readiness
 
 - App icons, splash, and store screenshots (real brand assets — current

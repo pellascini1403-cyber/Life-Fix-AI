@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +6,8 @@ import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Card, Header, Text } from '../../src/components/ui';
 import { CATEGORIES, CATEGORY_ICONS } from '../../src/constants/categories';
+import { useDailyLimitGuard } from '../../src/hooks/useDailyLimitGuard';
+import { pickImageFromGallery } from '../../src/services/media/pickImageFromGallery';
 import { useAnalysisSessionStore } from '../../src/state/useAnalysisSessionStore';
 import { useTheme } from '../../src/theme';
 import { ProblemCategory } from '../../src/types/analysis';
@@ -16,29 +17,30 @@ export default function HomeScreen() {
   const { t } = useTranslation();
   const setStartCategory = useAnalysisSessionStore((s) => s.setStartCategory);
   const runAnalysis = useAnalysisSessionStore((s) => s.runAnalysis);
+  const canRunAnalysis = useDailyLimitGuard();
 
-  const openCamera = (category?: ProblemCategory) => {
+  const openCamera = async (category?: ProblemCategory) => {
+    if (!(await canRunAnalysis())) return;
     setStartCategory(category ?? null);
     router.push('/camera');
   };
 
   const pickFromGallery = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
+    if (!(await canRunAnalysis())) return;
+
+    const result = await pickImageFromGallery();
+    if (result.status === 'canceled') return;
+    if (result.status === 'permission_denied') {
       Alert.alert(t('errors.genericTitle'), t('camera.permissionBody'));
       return;
     }
-
-    const picked = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.7,
-      allowsEditing: false,
-    });
-
-    if (picked.canceled || !picked.assets[0]) return;
+    if (result.status === 'error') {
+      Alert.alert(t('errors.genericTitle'), t('errors.galleryError'));
+      return;
+    }
 
     router.push('/result');
-    void runAnalysis({ imageUri: picked.assets[0].uri });
+    void runAnalysis({ imageUri: result.uri });
   };
 
   return (

@@ -37,7 +37,14 @@
     "emptyCta": "Analizar un problema",
     "deleteConfirmTitle": "¿Eliminar este análisis?",
     "deleteConfirmBody": "Esta acción no se puede deshacer.",
-    "clearAll": "Borrar historial"
+    "clearAll": "Borrar historial",
+    "clearAllConfirmTitle": "¿Borrar todo el historial?",
+    "clearAllConfirmBody": "Se eliminarán todos los análisis guardados. Esta acción no se puede deshacer.",
+    "loadErrorBody": "No pudimos cargar tu historial. Probá de nuevo.",
+    "saveError": "No pudimos guardar este análisis. Probá de nuevo.",
+    "deleteError": "No pudimos eliminar este análisis. Probá de nuevo.",
+    "clearError": "No pudimos borrar el historial. Probá de nuevo.",
+    "feedbackError": "No pudimos guardar tu respuesta. Probá de nuevo."
   },
   "profile": {
     "title": "Perfil",
@@ -52,7 +59,9 @@
     "signOut": "Cerrar sesión",
     "dailyAnalysesLeft": "{{count}} análisis gratis hoy",
     "dailyAnalysesLeft_one": "{{count}} análisis gratis hoy",
-    "dailyAnalysesLeft_other": "{{count}} análisis gratis hoy"
+    "dailyAnalysesLeft_other": "{{count}} análisis gratis hoy",
+    "comingSoonTitle": "Muy pronto",
+    "comingSoonBody": "Esta función todavía no está disponible. La estamos preparando para una próxima actualización."
   },
   "analysis": {
     "analyzing": "Analizando tu problema…",
@@ -104,6 +113,7 @@
     "networkBody": "Revisá tu conexión a internet e intentá de nuevo.",
     "cameraUnavailable": "La cámara no está disponible en este dispositivo.",
     "analysisFailed": "No pudimos analizar la imagen. Intentá con otra foto.",
+    "galleryError": "No pudimos abrir la galería. Probá de nuevo.",
     "analysis": {
       "invalidRequest": "Algo en la solicitud no era válido. Probá de nuevo.",
       "invalidImage": "No pudimos usar esa imagen. Probá con otra foto.",
@@ -120,5 +130,53 @@
     "bannerTitle": "Aviso de seguridad",
     "riskHigh": "Este problema puede ser peligroso. Consultá a un profesional antes de actuar.",
     "riskMedium": "Actuá con precaución y seguí las indicaciones con cuidado."
+  },
+  "entitlements": {
+    "limitReachedTitle": "Llegaste al límite gratuito de hoy",
+    "limitReachedBody": "Ya usaste tus 3 análisis gratis de hoy. Podés volver a analizar mañana."
+  },
+  "about": {
+    "title": "Acerca de LifeFix AI",
+    "intro": "LifeFix AI te ayuda a entender problemas cotidianos del hogar (reparaciones, limpieza, ropa, jardín y más) y te sugiere pasos claros para resolverlos.",
+    "howItWorksTitle": "Cómo funciona hoy",
+    "howItWorksBody": "Sacás una foto o elegís una imagen de tu galería, contás qué está pasando y la app te muestra una posible causa y una guía paso a paso. Por el momento, el análisis se genera con datos de ejemplo simulados en la app, no con un servicio de inteligencia artificial en línea.",
+    "statusTitle": "En desarrollo",
+    "statusBody": "Esta es una versión en desarrollo. Estamos preparando la arquitectura para conectar más adelante un análisis con inteligencia artificial real, sin costo adicional para vos por ahora."
+  },
+  "privacy": {
+    "title": "Privacidad",
+    "analysisTitle": "Fotos y análisis",
+    "analysisBody": "Ahora mismo, el análisis de tu problema se genera con datos de ejemplo simulados dentro de la propia app: la foto que sacás o elegís no se envía a ningún servidor ni servicio de inteligencia artificial. Se usa únicamente para mostrártela en la pantalla de resultado.",
+    "historyTitle": "Historial",
+    "historyBody": "Un análisis solo se guarda en tu historial cuando vos tocás \"Guardar en historial\". Se almacena únicamente en este dispositivo (no en un servidor), y podés eliminar un análisis puntual o borrar todo el historial cuando quieras desde la pantalla de Historial.",
+    "accountsTitle": "Cuentas y datos personales",
+    "accountsBody": "LifeFix AI todavía no pide crear una cuenta ni pide datos personales como nombre, email o teléfono. El idioma que elegís y el contador de análisis gratis del día también se guardan solo en este dispositivo.",
+    "permissionsTitle": "Permisos del dispositivo",
+    "permissionsBody": "La app pide permiso de cámara para fotografiar el problema y permiso de galería para elegir una imagen existente. Si no otorgás un permiso, simplemente no vas a poder usar esa función puntual; el resto de la app sigue funcionando."
+  },
+  "help": {
+    "title": "Ayuda",
+    "faqs": [
+      {
+        "question": "¿Cómo analizo un problema?",
+        "answer": "Desde Inicio, tocá \"Analizar un problema\" para sacar una foto, o \"Elegir de la galería\" para usar una imagen que ya tenés. También podés tocar una categoría para ir directo a la cámara con ese contexto."
+      },
+      {
+        "question": "¿Cuántos análisis gratis tengo por día?",
+        "answer": "Tenés 3 análisis gratis por día. El contador se reinicia automáticamente al empezar un nuevo día."
+      },
+      {
+        "question": "¿Cómo guardo un resultado en mi historial?",
+        "answer": "En la pantalla de resultado, tocá \"Guardar en historial\". Vas a poder verlo, calificarlo o eliminarlo después desde la pestaña Historial."
+      },
+      {
+        "question": "¿Cómo cambio el idioma de la app?",
+        "answer": "Andá a Perfil y tocá \"Idioma\" para alternar entre español e inglés. La app va a recordar tu elección la próxima vez que la abras."
+      },
+      {
+        "question": "¿Qué pasa si le niego el permiso de cámara o galería?",
+        "answer": "Podés seguir usando el resto de la app con normalidad. Solo vas a necesitar otorgar el permiso correspondiente cuando quieras usar esa función en particular."
+      }
+    ]
   }
 }

@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import * as Speech from 'expo-speech';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -30,6 +30,7 @@ export default function ResultScreen() {
   const { t, i18n } = useTranslation();
   const { status, result, errorCode, reset } = useAnalysisSessionStore();
   const saveToHistory = useHistoryStore((s) => s.save);
+  const persistFeedback = useHistoryStore((s) => s.setFeedback);
   const [saved, setSaved] = useState(false);
   const [feedback, setFeedback] = useState<SolutionFeedback | null>(null);
   const [simplified, setSimplified] = useState<SimplifiedSolution | null>(null);
@@ -118,8 +119,23 @@ export default function ResultScreen() {
   }
 
   const handleSave = async () => {
-    await saveToHistory(result);
-    setSaved(true);
+    const ok = await saveToHistory(result, feedback);
+    if (ok) {
+      setSaved(true);
+    } else {
+      Alert.alert(t('errors.genericTitle'), t('history.saveError'));
+    }
+  };
+
+  const handleFeedback = (value: SolutionFeedback) => {
+    setFeedback(value);
+    if (!saved) return;
+    void (async () => {
+      const ok = await persistFeedback(result.id, value);
+      if (!ok) {
+        Alert.alert(t('errors.genericTitle'), t('history.feedbackError'));
+      }
+    })();
   };
 
   return (
@@ -264,13 +280,13 @@ export default function ResultScreen() {
               label={t('analysis.feedbackYes')}
               icon="thumbs-up-outline"
               active={feedback === 'helpful'}
-              onPress={() => setFeedback('helpful')}
+              onPress={() => handleFeedback('helpful')}
             />
             <FeedbackButton
               label={t('analysis.feedbackNo')}
               icon="thumbs-down-outline"
               active={feedback === 'not_helpful'}
-              onPress={() => setFeedback('not_helpful')}
+              onPress={() => handleFeedback('not_helpful')}
             />
           </View>
         </Card>

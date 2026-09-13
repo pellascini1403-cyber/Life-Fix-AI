@@ -14,7 +14,7 @@ This is a real, production-track codebase, not a prototype: strict
 TypeScript, a modular service layer, and an architecture designed to reach
 the App Store and Google Play — not a demo meant to be thrown away.
 
-## Status: Phase 5
+## Status: Phase 5.5
 
 Phase 1 built the foundation (navigation, design system, screens,
 component library). Phase 2 added a real backend and a real AI provider
@@ -23,12 +23,19 @@ fully built, and still there, but **not the active default right now**:
 per an explicit, cost-conscious product decision, development runs against
 `MockAIService` (simulated data, zero network calls, zero cost) until
 we're ready to pay for real AI usage. See "Developing without any external
-cost" below. **Phase 5 adds two delight/accessibility features that work
-entirely offline** — "Explicámelo más fácil" (a rule-based, zero-cost text
+cost" below. Phase 5 added two delight/accessibility features that work
+entirely offline — "Explicámelo más fácil" (a rule-based, zero-cost text
 simplifier) and "Escuchar solución" (on-device text-to-speech via
-`expo-speech`) — plus an accessibility pass across every screen. See
-[What's implemented](#whats-implemented--whats-not) for the precise,
-current line between what's real and what's still a documented gap.
+`expo-speech`) — plus an accessibility pass across every screen. **Phase
+5.5 is a hardening pass**: the daily free-analysis limit is now actually
+enforced and persisted (not just displayed), every history mutation
+handles its own failures with real user feedback, Home and Camera share
+one gallery-picker implementation, the selected language survives a
+restart, and Profile's five menu rows all do something real (no dead
+buttons) — still with zero payment/subscription code and zero calls to a
+paid AI provider. See [What's implemented](#whats-implemented--whats-not)
+for the precise, current line between what's real and what's still a
+documented gap.
 
 ### Developing without any external cost
 
@@ -156,7 +163,7 @@ sites:
 | `RateLimiter` (`backend/rateLimit/`) | abuse/cost guard for `/analyze` | `InMemoryRateLimiter` — **structurally complete and unit-tested, but currently a no-op in practice**; see "What's implemented / what's not" |
 | `SolutionSimplificationService` (`src/services/simplify/`) | rewrite a result's text in plainer language | `LocalSolutionSimplificationService` — rule-based word substitution + safe sentence splitting, zero cost. Powers "Explicámelo más fácil" |
 | `AuthService` | current user, sign in/out | `AnonymousAuthService` (local, in-memory) |
-| `EntitlementsService` | plan, daily-use limits | `LocalEntitlementsService` (in-memory, `free` plan only) |
+| `EntitlementsService` | plan, daily-use limits | `LocalEntitlementsService` (`free` plan only; daily usage persisted to AsyncStorage with an automatic reset on a new local day, and actually enforced via `useDailyLimitGuard()` in Home/Camera) |
 | `AnalyticsService` | event tracking | `NoopAnalyticsService` |
 | `HistoryRepository` | saved analyses | `AsyncStorageHistoryRepository` (on-device only) |
 | `RiskClassifier` (`src/safety/`) | flags dangerous topics | `KeywordRiskClassifier` — used defensively client-side, and authoritatively server-side in `backend/safety/applySafetyPolicy.ts` (same module, imported by both) |
@@ -207,6 +214,7 @@ app/                      Expo Router routes (screens + navigation)
   (tabs)/                 Bottom tab navigator: Home, History, Profile
   camera.tsx               Full-screen capture flow (modal)
   result.tsx                Analysis result (modal)
+  about.tsx / privacy.tsx / help.tsx   Profile's info screens (modal)
   analyze+api.ts            POST /analyze — thin HTTP adapter (server-only)
   _layout.tsx              Root providers (theme, safe area, gesture handler)
 
@@ -225,10 +233,11 @@ backend/                  Server-only. Reachable ONLY from app/analyze+api.ts �
 
 src/
   theme/                   Design tokens (color, spacing, typography) + ThemeProvider
-  i18n/                    i18next setup + es/en locale files
+  i18n/                    i18next setup + es/en locale files + language persistence
   components/
     ui/                    Generic reusable primitives (Button, Card, Input, …)
     results/               Analysis-result-specific components
+  hooks/                   useDailyLimitGuard — gates a new analysis on the daily limit
   services/
     ai/                    AIService interface, MockAIService, RemoteAIService
     auth/                  AuthService interface + AnonymousAuthService
@@ -238,6 +247,7 @@ src/
     device/                Local device-id (used as the rate-limit key)
     simplify/              SolutionSimplificationService + LocalSolutionSimplificationService
     history/               HistoryRepository interface + AsyncStorage impl
+    media/                 pickImageFromGallery — shared Home/Camera gallery picker
   safety/                  RiskClassifier (shared by client and backend)
   state/                   Zustand stores
   types/                   Shared domain types (AnalysisResult, AnalysisErrorCode, …)
@@ -324,6 +334,20 @@ from `app/analyze+api.ts`) and is safe for real secrets.
   one when no message is passed, and enlarged three touch targets that
   were under the ~44×44 minimum (`ResultCard`'s delete button, and the
   close buttons on `camera.tsx`/`result.tsx`).
+
+- **Phase 5.5 hardening.** The 3-analysis daily free limit is persisted
+  (AsyncStorage, with an automatic reset on a new local day) and actually
+  enforced in Home and Camera via `useDailyLimitGuard()` — previously it was
+  tracked in memory but never checked. Every `useHistoryStore` mutation now
+  handles its own failure with a localized `Alert` instead of throwing
+  silently; the History screen shows a real error state (with retry) instead
+  of a misleading empty state when loading fails, and has a "Clear history"
+  action. Home and Camera share one gallery-picker implementation
+  (`pickImageFromGallery`) instead of two independently-drifted copies. The
+  selected language now persists across restarts. Profile's "Ayuda", "Acerca
+  de LifeFix AI", and "Privacidad" rows are real screens now instead of dead
+  buttons, and "Pasar a PRO"/"Notificaciones" show an honest "coming soon"
+  message — no payment code involved.
 
 **A real bug the simplifier's own tests caught:** the first version of
 `substituteWords` used `\bword\b` regex boundaries, which silently never

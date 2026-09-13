@@ -20,6 +20,9 @@ function RootStack() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="camera" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="result" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="about" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="privacy" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="help" options={{ presentation: 'modal' }} />
       </Stack>
     </>
   );

@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
 import { CameraType, CameraView, useCameraPermissions } from 'expo-camera';
-import * as ImagePicker from 'expo-image-picker';
 import { router, Stack } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +13,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Input, Text } from '../src/components/ui';
+import { useDailyLimitGuard } from '../src/hooks/useDailyLimitGuard';
+import { pickImageFromGallery } from '../src/services/media/pickImageFromGallery';
 import { useAnalysisSessionStore } from '../src/state/useAnalysisSessionStore';
 import { useTheme } from '../src/theme';
 
@@ -29,6 +30,7 @@ export default function CameraScreen() {
 
   const startCategory = useAnalysisSessionStore((s) => s.startCategory);
   const runAnalysis = useAnalysisSessionStore((s) => s.runAnalysis);
+  const canRunAnalysis = useDailyLimitGuard();
 
   const handleCapture = async () => {
     if (!cameraRef.current) return;
@@ -41,14 +43,22 @@ export default function CameraScreen() {
   };
 
   const handlePickFromGallery = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permissionResult.granted) return;
-    const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7 });
-    if (!picked.canceled && picked.assets[0]) setCapturedUri(picked.assets[0].uri);
+    const result = await pickImageFromGallery();
+    if (result.status === 'canceled') return;
+    if (result.status === 'permission_denied') {
+      Alert.alert(t('errors.genericTitle'), t('camera.permissionBody'));
+      return;
+    }
+    if (result.status === 'error') {
+      Alert.alert(t('errors.genericTitle'), t('errors.galleryError'));
+      return;
+    }
+    setCapturedUri(result.uri);
   };
 
-  const confirmPhoto = () => {
+  const confirmPhoto = async () => {
     if (!capturedUri) return;
+    if (!(await canRunAnalysis())) return;
     router.replace('/result');
     void runAnalysis({
       imageUri: capturedUri,
