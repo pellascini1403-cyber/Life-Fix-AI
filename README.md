@@ -14,7 +14,7 @@ This is a real, production-track codebase, not a prototype: strict
 TypeScript, a modular service layer, and an architecture designed to reach
 the App Store and Google Play — not a demo meant to be thrown away.
 
-## Status: Phase 5.75
+## Status: Phase 5.9
 
 Phase 1 built the foundation (navigation, design system, screens,
 component library). Phase 2 added a real backend and a real AI provider
@@ -39,9 +39,15 @@ instead of a blank one) **and closes the test-coverage gap on the core
 flow and screens** — `useAnalysisSessionStore` (the store behind the
 entire capture → analyze → result loop) went from 0% to fully tested, and
 Home/Result/History now have their own screen-level tests, none of which
-existed before. See [What's implemented](#whats-implemented--whats-not)
-for the precise, current line between what's real and what's still a
-documented gap.
+existed before. **Phase 5.9 closes the last free robustness gaps found in a
+full project audit** — Camera and Profile went from 0% to real coverage of
+their critical flows, `app/+not-found.tsx` (the last screen with hardcoded
+Spanish strings) is now fully internationalized, and there's now an
+automated smoke test confirming the app boots and the Error Boundary stays
+wired — before moving on to anything in Phase 6 (store readiness), most of
+which either costs money or depends on a product decision not made yet.
+See [What's implemented](#whats-implemented--whats-not) for the precise,
+current line between what's real and what's still a documented gap.
 
 ### Developing without any external cost
 
@@ -355,6 +361,20 @@ from `app/analyze+api.ts`) and is safe for real secrets.
   de LifeFix AI", and "Privacidad" rows are real screens now instead of dead
   buttons, and "Pasar a PRO"/"Notificaciones" show an honest "coming soon"
   message — no payment code involved.
+
+- **Phase 5.75 + 5.9 technical robustness.** A global `AppErrorBoundary`
+  (exported as `ErrorBoundary` from `app/_layout.tsx` per Expo Router's own
+  convention) now catches any unexpected render error app-wide and shows a
+  Retry/Go to Home recovery screen instead of a blank one — verified live
+  against the running dev server, not just in a unit test. Every screen now
+  has real test coverage of its critical flows (previously only services
+  and stores were tested, never a rendered screen): Home, Result, History,
+  Camera, and Profile, plus `useAnalysisSessionStore` (the store behind the
+  entire capture → analyze → result loop, 0% → 100%) and a smoke test that
+  the app boots and the Error Boundary stays wired. `app/+not-found.tsx`,
+  the last screen with hardcoded Spanish strings, is now fully
+  internationalized. Overall coverage (`src/**` + `app/**`): 68.86% →
+  86.65% statements.
 
 **A real bug the simplifier's own tests caught:** the first version of
 `substituteWords` used `\bword\b` regex boundaries, which silently never

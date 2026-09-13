@@ -139,6 +139,11 @@
     "body": "The app hit an unexpected error. You can retry or go back to Home.",
     "goHome": "Go to Home"
   },
+  "notFound": {
+    "title": "Oops",
+    "message": "This screen doesn't exist.",
+    "goHome": "Go to Home"
+  },
   "about": {
     "title": "About LifeFix AI",
     "intro": "LifeFix AI helps you understand everyday household problems (repairs, cleaning, clothing, garden, and more) and gives you clear steps to fix them.",

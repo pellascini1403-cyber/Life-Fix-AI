@@ -227,6 +227,52 @@ either of those resume.
 - **Tests:** 100 → 130, plus a clean `tsc --noEmit` and `eslint .` (zero
   warnings).
 
+## Phase 5.9 — Final technical coverage: Camera, Profile, app boot (done)
+
+Closed the last free, dependency-free robustness gaps found in a full
+project audit before considering Store readiness (Phase 6) — deliberately
+picked over starting Phase 6, since almost everything in that phase either
+costs money (developer accounts) or depends on a not-yet-made product
+decision (brand identity, whether history stays device-local).
+
+- **`app/camera.tsx` test coverage**: 0% → 90%. Covers camera permission
+  denied (request/cancel), capture → preview → confirm respecting the
+  daily limit, a failed capture, the gallery picker embedded in Camera
+  (success/permission-denied/error), and retaking a photo.
+- **`app/(tabs)/profile.tsx` test coverage**: 0% → 100% statements.
+  Covers the language toggle and its persistence, both "coming soon"
+  alerts (Upgrade to PRO, Notifications), navigation to Help/About/Privacy,
+  and — the one genuinely new behavior verified here — that the daily
+  analysis count actually refreshes when the tab regains focus, not just
+  on first mount.
+- **`app/+not-found.tsx` fully internationalized.** The only screen left
+  with hardcoded Spanish strings (title, message, and the "back home"
+  link) — found during the audit, now routed through `t()` with new
+  `notFound.*` keys in both locales. Same design, same behavior.
+- **App-boot smoke tests.** `app/_layout.tsx`: mounts without crashing
+  once fonts are loaded, registers every top-level route on the Stack, and
+  — the actual regression guard — asserts its `ErrorBoundary` export is
+  still `AppErrorBoundary` (Expo Router only wires up an app-wide error
+  boundary if that exact export exists; renaming or dropping it would
+  silently disable the whole Phase 5.75 feature without breaking anything
+  else visibly). `app/(tabs)/_layout.tsx`: mounts and registers exactly
+  the three main tabs (Home, History, Profile) with their translated
+  titles.
+- **Closed the remaining gaps in `app/result.tsx`** (53% → 91%): close
+  (stops speech, resets the session, navigates back), "Explicámelo más
+  fácil" toggling on and off, "Escuchar solución" (including the
+  no-TTS-available fallback message), the error/no-result state and its
+  own close action, and the feedback-persistence failure alert.
+- **Found and fixed along the way:** `GestureHandlerRootView`'s native
+  init crashed under Jest the same way `@expo/vector-icons` did in Phase
+  5.75 — nothing had rendered the full root layout in a test before this
+  phase. Fixed with `react-native-gesture-handler`'s own official
+  `jestSetup.js`, added to `jest.setup.js` (no new dependency; the file
+  ships with the package that's already installed).
+- **Tests:** 130 → 160. Coverage (`src/**` + `app/**`): 68.86% → 86.65%
+  statements. `tsc --noEmit` and `eslint .` both clean (0 errors, 0
+  warnings).
+
 ## Phase 6 — Store readiness
 
 - App icons, splash, and store screenshots (real brand assets — current
