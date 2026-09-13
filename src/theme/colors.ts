@@ -1,5 +1,5 @@
 /**
- * LifeFix AI color tokens.
+ * Resolia color tokens.
  *
  * Design intent: warm neutrals (not clinical white/gray), a single restrained
  * teal accent, and no gradients or saturated color. Both palettes must hit

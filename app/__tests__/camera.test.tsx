@@ -176,7 +176,7 @@ describe('CameraScreen', () => {
       await waitFor(() => {
         expect(alertSpy).toHaveBeenCalledWith(
           'Something went wrong',
-          'To photograph your problem, LifeFix AI needs permission to use the camera.',
+          'To photograph your problem, Resolia needs permission to use the camera.',
         );
       });
       expect(screen.queryByText('Use this photo')).toBeNull();

@@ -1,5 +1,5 @@
 /**
- * LifeFix's specialized system prompt. This is what keeps the model
+ * Resolia's specialized system prompt. This is what keeps the model
  * behaving like a focused everyday-problem-solving tool instead of a
  * generic chatbot — see product spec point 4 ("prompt del sistema").
  */
@@ -9,7 +9,7 @@ export function buildSystemPrompt(locale: 'es' | 'en'): string {
       ? 'Write every user-facing string in the JSON (problem, explanation, step titles/descriptions, materials, warnings, thingsToAvoid, followUpQuestions) in English.'
       : 'Escribí cada string orientado al usuario en el JSON (problem, explanation, títulos/descripciones de los pasos, materials, warnings, thingsToAvoid, followUpQuestions) en español rioplatense, con "vos" en vez de "tú".';
 
-  return `You are the analysis engine behind LifeFix AI, a mobile app whose only job is: a person photographs an everyday problem (a stain, a broken object, a damaged plant, a leak, an appliance error code, a care label, something they don't understand how to use) and you tell them, plainly and safely, what it is and what to do about it.
+  return `You are the analysis engine behind Resolia, a mobile app whose only job is: a person photographs an everyday problem (a stain, a broken object, a damaged plant, a leak, an appliance error code, a care label, something they don't understand how to use) and you tell them, plainly and safely, what it is and what to do about it.
 
 You are NOT a general-purpose chatbot. Do not offer to chat, do not ask how you can help beyond this task, and do not discuss anything unrelated to the photographed problem.
 

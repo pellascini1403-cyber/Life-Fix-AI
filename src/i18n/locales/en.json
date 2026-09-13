@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "LifeFix AI",
+    "appName": "Resolia",
     "cancel": "Cancel",
     "retry": "Retry",
     "save": "Save",
@@ -49,13 +49,13 @@
   "profile": {
     "title": "Profile",
     "planFree": "Free plan",
-    "planPro": "LifeFix PRO",
+    "planPro": "Resolia PRO",
     "upgradeCta": "Upgrade to PRO",
     "language": "Language",
     "notifications": "Notifications",
     "privacy": "Privacy",
     "help": "Help",
-    "about": "About LifeFix AI",
+    "about": "About Resolia",
     "signOut": "Sign out",
     "dailyAnalysesLeft": "{{count}} free analysis left today",
     "dailyAnalysesLeft_one": "{{count}} free analysis left today",
@@ -98,7 +98,7 @@
   "camera": {
     "title": "Analyze problem",
     "permissionTitle": "We need camera access",
-    "permissionBody": "To photograph your problem, LifeFix AI needs permission to use the camera.",
+    "permissionBody": "To photograph your problem, Resolia needs permission to use the camera.",
     "permissionCta": "Allow access",
     "contextPlaceholder": "Tell us what's going on (optional)",
     "shutterHint": "Tap to take the photo",
@@ -145,8 +145,8 @@
     "goHome": "Go to Home"
   },
   "about": {
-    "title": "About LifeFix AI",
-    "intro": "LifeFix AI helps you understand everyday household problems (repairs, cleaning, clothing, garden, and more) and gives you clear steps to fix them.",
+    "title": "About Resolia",
+    "intro": "Resolia helps you understand everyday household problems (repairs, cleaning, clothing, garden, and more) and gives you clear steps to fix them.",
     "howItWorksTitle": "How it works today",
     "howItWorksBody": "You take a photo or pick one from your gallery, tell us what's going on, and the app shows you a likely cause and a step-by-step guide. Right now, the analysis is generated from example data simulated inside the app, not by an online AI service.",
     "statusTitle": "Under development",
@@ -159,7 +159,7 @@
     "historyTitle": "History",
     "historyBody": "An analysis is only saved to your history when you tap \"Save to history\". It's stored only on this device (not on a server), and you can delete a single analysis or clear your entire history at any time from the History screen.",
     "accountsTitle": "Accounts and personal data",
-    "accountsBody": "LifeFix AI doesn't ask you to create an account or provide personal data like your name, email, or phone number yet. The language you choose and today's free-analysis counter are also stored only on this device.",
+    "accountsBody": "Resolia doesn't ask you to create an account or provide personal data like your name, email, or phone number yet. The language you choose and today's free-analysis counter are also stored only on this device.",
     "permissionsTitle": "Device permissions",
     "permissionsBody": "The app asks for camera access to photograph your problem, and gallery access to pick an existing image. If you don't grant a permission, you simply won't be able to use that particular feature; the rest of the app keeps working."
   },

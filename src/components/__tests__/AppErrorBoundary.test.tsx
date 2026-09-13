@@ -49,6 +49,6 @@ describe('AppErrorBoundary', () => {
     const error = new Error('boom');
     render(<AppErrorBoundary error={error} retry={jest.fn().mockResolvedValue(undefined)} />);
 
-    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('LifeFix'), error);
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Resolia'), error);
   });
 });

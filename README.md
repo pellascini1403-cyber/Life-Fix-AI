@@ -1,8 +1,8 @@
-# LifeFix AI
+# Resolia
 
-> "Tenés un problema. LifeFix te dice qué hacer."
+> "Tenés un problema. Resolia te dice qué hacer."
 
-LifeFix AI is a mobile assistant for everyday real-world problems. A user
+Resolia is a mobile assistant for everyday real-world problems. A user
 photographs something — a stain, a broken appliance, a damaged plant, a
 leak, an error code, a care label — optionally describes what's going on,
 and gets back a clear, structured, step-by-step solution.
@@ -75,7 +75,7 @@ inside the mobile binary:
 
 - **Mobile app** — everything under `app/(tabs)/`, `app/camera.tsx`,
   `app/result.tsx`, and `src/`. Owns UI, navigation, local device state
-  (history, current session), and calls only the LifeFix backend, through
+  (history, current session), and calls only the Resolia backend, through
   `ApiClient`. It never talks to an AI provider SDK directly, and never
   imports anything from `backend/`.
 - **Backend** — `app/analyze+api.ts` (the HTTP boundary) plus everything
@@ -132,7 +132,7 @@ server-side only; it never reaches the response body.
 
 ### Safety, by construction — applied twice
 
-LifeFix's system prompt (`backend/aiProvider/systemPrompt.ts`) instructs
+Resolia's system prompt (`backend/aiProvider/systemPrompt.ts`) instructs
 Claude to classify every problem as `safe` / `caution` / `professional` and
 to keep instructions generic (never step-by-step) for anything in the
 `professional` tier — but **the backend never trusts that self-report
@@ -358,7 +358,7 @@ from `app/analyze+api.ts`) and is safe for real secrets.
   action. Home and Camera share one gallery-picker implementation
   (`pickImageFromGallery`) instead of two independently-drifted copies. The
   selected language now persists across restarts. Profile's "Ayuda", "Acerca
-  de LifeFix AI", and "Privacidad" rows are real screens now instead of dead
+  de Resolia", and "Privacidad" rows are real screens now instead of dead
   buttons, and "Pasar a PRO"/"Notificaciones" show an honest "coming soon"
   message — no payment code involved.
 

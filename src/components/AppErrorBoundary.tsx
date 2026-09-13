@@ -26,7 +26,7 @@ export function AppErrorBoundary({ error, retry }: AppErrorBoundaryProps) {
   const scheme = useColorScheme();
   const colors = scheme === 'dark' ? darkColors : lightColors;
 
-  console.error('[LifeFix] Unexpected render error:', error);
+  console.error('[Resolia] Unexpected render error:', error);
 
   const goHome = () => {
     router.replace('/');

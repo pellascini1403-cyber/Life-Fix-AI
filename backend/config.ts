@@ -48,7 +48,7 @@ function intFromEnv(name: string, fallback: number): number {
 export function requireAnthropicApiKeyConfigured(): void {
   if (!process.env.ANTHROPIC_API_KEY) {
     throw providerNotConfiguredError(
-      'ANTHROPIC_API_KEY is not set. The LifeFix backend cannot call the AI provider until ' +
+      'ANTHROPIC_API_KEY is not set. The Resolia backend cannot call the AI provider until ' +
         'it is configured — see .env.example and README.md "AI provider configuration".',
     );
   }

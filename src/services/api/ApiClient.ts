@@ -1,5 +1,5 @@
 /**
- * Thin HTTP client for talking to the LifeFix backend (never an AI provider
+ * Thin HTTP client for talking to the Resolia backend (never an AI provider
  * directly — see docs/architecture.md). Centralizes base URL, auth header
  * injection, and error normalization so services don't each reimplement it.
  */

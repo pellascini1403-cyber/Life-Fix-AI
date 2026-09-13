@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "LifeFix AI",
+    "appName": "Resolia",
     "cancel": "Cancelar",
     "retry": "Reintentar",
     "save": "Guardar",
@@ -49,13 +49,13 @@
   "profile": {
     "title": "Perfil",
     "planFree": "Plan Gratis",
-    "planPro": "LifeFix PRO",
+    "planPro": "Resolia PRO",
     "upgradeCta": "Pasar a PRO",
     "language": "Idioma",
     "notifications": "Notificaciones",
     "privacy": "Privacidad",
     "help": "Ayuda",
-    "about": "Acerca de LifeFix AI",
+    "about": "Acerca de Resolia",
     "signOut": "Cerrar sesión",
     "dailyAnalysesLeft": "{{count}} análisis gratis hoy",
     "dailyAnalysesLeft_one": "{{count}} análisis gratis hoy",
@@ -98,7 +98,7 @@
   "camera": {
     "title": "Analizar problema",
     "permissionTitle": "Necesitamos acceso a la cámara",
-    "permissionBody": "Para fotografiar tu problema, LifeFix AI necesita permiso para usar la cámara.",
+    "permissionBody": "Para fotografiar tu problema, Resolia necesita permiso para usar la cámara.",
     "permissionCta": "Permitir acceso",
     "contextPlaceholder": "Contanos qué está pasando (opcional)",
     "shutterHint": "Tocá para tomar la foto",
@@ -145,8 +145,8 @@
     "goHome": "Volver al inicio"
   },
   "about": {
-    "title": "Acerca de LifeFix AI",
-    "intro": "LifeFix AI te ayuda a entender problemas cotidianos del hogar (reparaciones, limpieza, ropa, jardín y más) y te sugiere pasos claros para resolverlos.",
+    "title": "Acerca de Resolia",
+    "intro": "Resolia te ayuda a entender problemas cotidianos del hogar (reparaciones, limpieza, ropa, jardín y más) y te sugiere pasos claros para resolverlos.",
     "howItWorksTitle": "Cómo funciona hoy",
     "howItWorksBody": "Sacás una foto o elegís una imagen de tu galería, contás qué está pasando y la app te muestra una posible causa y una guía paso a paso. Por el momento, el análisis se genera con datos de ejemplo simulados en la app, no con un servicio de inteligencia artificial en línea.",
     "statusTitle": "En desarrollo",
@@ -159,7 +159,7 @@
     "historyTitle": "Historial",
     "historyBody": "Un análisis solo se guarda en tu historial cuando vos tocás \"Guardar en historial\". Se almacena únicamente en este dispositivo (no en un servidor), y podés eliminar un análisis puntual o borrar todo el historial cuando quieras desde la pantalla de Historial.",
     "accountsTitle": "Cuentas y datos personales",
-    "accountsBody": "LifeFix AI todavía no pide crear una cuenta ni pide datos personales como nombre, email o teléfono. El idioma que elegís y el contador de análisis gratis del día también se guardan solo en este dispositivo.",
+    "accountsBody": "Resolia todavía no pide crear una cuenta ni pide datos personales como nombre, email o teléfono. El idioma que elegís y el contador de análisis gratis del día también se guardan solo en este dispositivo.",
     "permissionsTitle": "Permisos del dispositivo",
     "permissionsBody": "La app pide permiso de cámara para fotografiar el problema y permiso de galería para elegir una imagen existente. Si no otorgás un permiso, simplemente no vas a poder usar esa función puntual; el resto de la app sigue funcionando."
   },

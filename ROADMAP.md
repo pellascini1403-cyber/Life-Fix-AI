@@ -1,6 +1,6 @@
-# LifeFix AI — Internal Roadmap
+# Resolia — Internal Roadmap
 
-Working plan for taking LifeFix from Phase 1 (this scaffold) to a shippable
+Working plan for taking Resolia from Phase 1 (this scaffold) to a shippable
 production app. Update this as phases complete or priorities shift.
 
 ## Phase 1 — Foundation (done)
@@ -168,7 +168,7 @@ before adding anything new.
   the device locale every launch.
 - **No more dead buttons in Profile.** "Pasar a PRO" and "Notificaciones"
   now show an honest "coming soon" message instead of doing nothing — no
-  payment logic anywhere. "Ayuda", "Acerca de LifeFix AI", and "Privacidad"
+  payment logic anywhere. "Ayuda", "Acerca de Resolia", and "Privacidad"
   are now real screens (`app/help.tsx`, `app/about.tsx`, `app/privacy.tsx`).
   Privacy's copy is deliberately scoped to only what the app actually does
   right now (simulated on-device analysis, opt-in local-only history,

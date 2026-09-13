@@ -120,9 +120,9 @@ describe('ProfileScreen', () => {
       expect(router.push).toHaveBeenCalledWith('/help');
     });
 
-    it('navigates to About LifeFix AI', () => {
+    it('navigates to About Resolia', () => {
       renderProfile();
-      fireEvent.press(screen.getByText('About LifeFix AI'));
+      fireEvent.press(screen.getByText('About Resolia'));
       expect(router.push).toHaveBeenCalledWith('/about');
     });
 

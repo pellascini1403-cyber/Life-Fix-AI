@@ -20,7 +20,7 @@ interface AnalyzeErrorBody {
 }
 
 /**
- * Production `AIService`: uploads the photo + context to LifeFix's own
+ * Production `AIService`: uploads the photo + context to Resolia's own
  * `/analyze` backend route (see `app/analyze+api.ts`) and never talks to
  * an AI provider directly. The backend owns the provider call, the
  * structured-output validation, and the safety policy — this client only
