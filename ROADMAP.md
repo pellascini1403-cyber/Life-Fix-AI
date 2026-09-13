@@ -181,6 +181,52 @@ before adding anything new.
   (daily-limit gate blocking a 4th analysis, the three new Profile screens,
   Clear history).
 
+## Phase 5.75 — Technical robustness: Error Boundary + core-flow test coverage (done)
+
+Zero new dependencies, zero new external services, no touches to
+`RemoteAIService`, `MockAIService`, the safety system, Auth, or
+Monetization — purely closing gaps found in a project-wide audit before
+either of those resume.
+
+- **Global Error Boundary.** `src/components/AppErrorBoundary.tsx`,
+  exported as `ErrorBoundary` from `app/_layout.tsx` per Expo Router's own
+  route convention — an unexpected render error anywhere in the app now
+  shows a recovery screen (Retry / Go to Home) instead of a blank one.
+  Deliberately self-contained: it reads color constants directly instead of
+  calling `useTheme()`, since the crash that triggers it may have happened
+  inside `ThemeProvider` itself. Verified twice — as a unit test, and live
+  against the running dev server (a temporary forced-throw + headless
+  screenshots confirmed the fallback renders, "Retry" re-attempts the same
+  crashing screen, and "Go to Home" actually recovers to a fully working
+  Home screen).
+- **`useAnalysisSessionStore` test coverage**: 0% → 100%. Covers the happy
+  path, the immediate `analyzing` transition, `ClientAnalysisError` code
+  mapping, the `UNKNOWN` fallback for a non-`ClientAnalysisError` throw,
+  `showResult`, `reset`, and `setStartCategory` — this store drives the
+  entire capture → analyze → result flow and had never had a test of its
+  own before this phase.
+- **Screen-level tests** (previously nonexistent — every prior test
+  exercised a service or store, never a rendered screen) for the
+  highest-risk flows: Home's daily-limit gate blocking both camera and
+  gallery entry points, category selection, and the gallery
+  permission-denied path; Result's save/feedback wiring into
+  `useHistoryStore` (including a forced-failure alert case); History's
+  error state + retry, "Clear history", and per-entry delete.
+- `collectCoverageFrom` now includes `app/**` (previously coverage was
+  blind to every screen).
+- **Found and fixed along the way, not part of the original scope but
+  necessary to make any of this possible:** the installed `expo-font@57.0.4`
+  imports `expo-asset` without declaring it as a dependency, and it wasn't
+  hoisted to a location `expo-font` could resolve — meaning *any* test
+  rendering `@expo/vector-icons` (i.e. almost every screen) crashed before
+  this phase. Fixed with a manual Jest mock (`__mocks__/@expo/vector-icons.js`)
+  rather than touching `package.json`, since icons are purely decorative in
+  tests. Also added the official `react-native-safe-area-context` Jest mock
+  to `jest.setup.js` (needed once screens using `useSafeAreaInsets` were
+  under test for the first time).
+- **Tests:** 100 → 130, plus a clean `tsc --noEmit` and `eslint .` (zero
+  warnings).
+
 ## Phase 6 — Store readiness
 
 - App icons, splash, and store screenshots (real brand assets — current

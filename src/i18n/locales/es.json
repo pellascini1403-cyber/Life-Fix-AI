@@ -135,6 +135,10 @@
     "limitReachedTitle": "Llegaste al límite gratuito de hoy",
     "limitReachedBody": "Ya usaste tus 3 análisis gratis de hoy. Podés volver a analizar mañana."
   },
+  "errorBoundary": {
+    "body": "La aplicación encontró un error inesperado. Podés reintentar o volver al inicio.",
+    "goHome": "Volver al inicio"
+  },
   "about": {
     "title": "Acerca de LifeFix AI",
     "intro": "LifeFix AI te ayuda a entender problemas cotidianos del hogar (reparaciones, limpieza, ropa, jardín y más) y te sugiere pasos claros para resolverlos.",

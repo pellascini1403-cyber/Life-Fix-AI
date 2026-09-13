@@ -14,7 +14,7 @@ This is a real, production-track codebase, not a prototype: strict
 TypeScript, a modular service layer, and an architecture designed to reach
 the App Store and Google Play — not a demo meant to be thrown away.
 
-## Status: Phase 5.5
+## Status: Phase 5.75
 
 Phase 1 built the foundation (navigation, design system, screens,
 component library). Phase 2 added a real backend and a real AI provider
@@ -33,7 +33,13 @@ handles its own failures with real user feedback, Home and Camera share
 one gallery-picker implementation, the selected language survives a
 restart, and Profile's five menu rows all do something real (no dead
 buttons) — still with zero payment/subscription code and zero calls to a
-paid AI provider. See [What's implemented](#whats-implemented--whats-not)
+paid AI provider. **Phase 5.75 adds a global Error Boundary** (a render
+error anywhere in the app now shows a Retry/Go to Home recovery screen
+instead of a blank one) **and closes the test-coverage gap on the core
+flow and screens** — `useAnalysisSessionStore` (the store behind the
+entire capture → analyze → result loop) went from 0% to fully tested, and
+Home/Result/History now have their own screen-level tests, none of which
+existed before. See [What's implemented](#whats-implemented--whats-not)
 for the precise, current line between what's real and what's still a
 documented gap.
 
@@ -235,6 +241,7 @@ src/
   theme/                   Design tokens (color, spacing, typography) + ThemeProvider
   i18n/                    i18next setup + es/en locale files + language persistence
   components/
+    AppErrorBoundary.tsx   Global recovery UI — exported as ErrorBoundary from app/_layout.tsx
     ui/                    Generic reusable primitives (Button, Card, Input, …)
     results/               Analysis-result-specific components
   hooks/                   useDailyLimitGuard — gates a new analysis on the daily limit

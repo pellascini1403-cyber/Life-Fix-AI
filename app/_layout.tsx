@@ -7,8 +7,11 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import '../src/i18n';
+import { AppErrorBoundary } from '../src/components/AppErrorBoundary';
 import { LoadingState } from '../src/components/ui';
 import { ThemeProvider, useTheme } from '../src/theme';
+
+export { AppErrorBoundary as ErrorBoundary };
 
 function RootStack() {
   const theme = useTheme();
