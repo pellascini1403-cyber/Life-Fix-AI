@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import * as Linking from 'expo-linking';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -31,7 +32,14 @@ export default function HomeScreen() {
     const result = await pickImageFromGallery();
     if (result.status === 'canceled') return;
     if (result.status === 'permission_denied') {
-      Alert.alert(t('errors.genericTitle'), t('camera.permissionBody'));
+      if (result.canAskAgain) {
+        Alert.alert(t('errors.genericTitle'), t('camera.galleryPermissionBody'));
+      } else {
+        Alert.alert(t('camera.permissionBlockedTitle'), t('camera.permissionBlockedBody'), [
+          { text: t('common.cancel'), style: 'cancel' },
+          { text: t('camera.openSettingsCta'), onPress: () => void Linking.openSettings() },
+        ]);
+      }
       return;
     }
     if (result.status === 'error') {

@@ -17,6 +17,13 @@ jest.mock('../../services/ai', () => ({
   }),
 }));
 
+const mockRecordAnalysisUsed = jest.fn().mockResolvedValue(undefined);
+jest.mock('../../services/entitlements/EntitlementsService', () => ({
+  entitlementsService: {
+    recordAnalysisUsed: (...args: unknown[]) => mockRecordAnalysisUsed(...args),
+  },
+}));
+
 function buildResult(id: string): AnalysisResult {
   return {
     id,
@@ -41,11 +48,13 @@ function buildResult(id: string): AnalysisResult {
 describe('useAnalysisSessionStore', () => {
   beforeEach(() => {
     mockAnalyze.mockReset();
+    mockRecordAnalysisUsed.mockClear();
     useAnalysisSessionStore.setState({
       status: 'idle',
       result: null,
       errorCode: null,
       startCategory: null,
+      lastRequest: null,
     });
   });
 
@@ -130,6 +139,54 @@ describe('useAnalysisSessionStore', () => {
       expect(useAnalysisSessionStore.getState().status).toBe('error');
       expect(useAnalysisSessionStore.getState().errorCode).toBe('UNKNOWN');
     });
+
+    it('records exactly one daily use on a successful new analysis', async () => {
+      mockAnalyze.mockResolvedValue(buildResult('a'));
+
+      await useAnalysisSessionStore.getState().runAnalysis({ imageUri: 'file://x.jpg' });
+
+      expect(mockRecordAnalysisUsed).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not record a daily use when the analysis fails', async () => {
+      mockAnalyze.mockRejectedValue(new ClientAnalysisError('TIMEOUT', 'boom'));
+
+      await useAnalysisSessionStore.getState().runAnalysis({ imageUri: 'file://x.jpg' });
+
+      expect(mockRecordAnalysisUsed).not.toHaveBeenCalled();
+    });
+
+    it('remembers the request as lastRequest, even when the analysis fails', async () => {
+      const request = { imageUri: 'file://x.jpg', userContext: 'leak' };
+      mockAnalyze.mockRejectedValue(new ClientAnalysisError('TIMEOUT', 'boom'));
+
+      await useAnalysisSessionStore.getState().runAnalysis(request);
+
+      expect(useAnalysisSessionStore.getState().lastRequest).toEqual(request);
+    });
+  });
+
+  describe('retryLastAnalysis', () => {
+    it('re-runs runAnalysis with the exact same request that last failed', async () => {
+      const request = { imageUri: 'file://x.jpg', userContext: 'leak' };
+      mockAnalyze.mockRejectedValueOnce(new ClientAnalysisError('TIMEOUT', 'boom'));
+      await useAnalysisSessionStore.getState().runAnalysis(request);
+      expect(useAnalysisSessionStore.getState().status).toBe('error');
+
+      mockAnalyze.mockResolvedValueOnce(buildResult('retried'));
+      await useAnalysisSessionStore.getState().retryLastAnalysis();
+
+      expect(mockAnalyze).toHaveBeenLastCalledWith(request);
+      expect(useAnalysisSessionStore.getState().status).toBe('ready');
+      expect(useAnalysisSessionStore.getState().result?.id).toBe('retried');
+      expect(mockRecordAnalysisUsed).toHaveBeenCalledTimes(1);
+    });
+
+    it('does nothing when there is no previous request to retry', async () => {
+      await useAnalysisSessionStore.getState().retryLastAnalysis();
+
+      expect(mockAnalyze).not.toHaveBeenCalled();
+    });
   });
 
   describe('showResult', () => {
@@ -144,15 +201,22 @@ describe('useAnalysisSessionStore', () => {
       expect(state.result).toEqual(result);
       expect(state.errorCode).toBeNull();
     });
+
+    it('never records a daily use — reopening a saved result is not a new analysis', () => {
+      useAnalysisSessionStore.getState().showResult(buildResult('a'));
+
+      expect(mockRecordAnalysisUsed).not.toHaveBeenCalled();
+    });
   });
 
   describe('reset', () => {
-    it('clears status, result, error code, and start category back to their initial values', () => {
+    it('clears status, result, error code, start category, and lastRequest back to their initial values', () => {
       useAnalysisSessionStore.setState({
         status: 'ready',
         result: buildResult('a'),
         errorCode: 'UNKNOWN',
         startCategory: 'garden',
+        lastRequest: { imageUri: 'file://x.jpg' },
       });
 
       useAnalysisSessionStore.getState().reset();
@@ -162,6 +226,7 @@ describe('useAnalysisSessionStore', () => {
       expect(state.result).toBeNull();
       expect(state.errorCode).toBeNull();
       expect(state.startCategory).toBeNull();
+      expect(state.lastRequest).toBeNull();
     });
   });
 });

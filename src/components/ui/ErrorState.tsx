@@ -11,9 +11,21 @@ export interface ErrorStateProps {
   message?: string;
   retryLabel?: string;
   onRetry?: () => void;
+  /** Optional secondary action (e.g. "Close"/"Cancel") shown below retry,
+   * for a screen where giving up is also a valid, distinct choice from
+   * retrying. Omitted entirely when not provided. */
+  secondaryLabel?: string;
+  onSecondaryAction?: () => void;
 }
 
-export function ErrorState({ title, message, retryLabel, onRetry }: ErrorStateProps) {
+export function ErrorState({
+  title,
+  message,
+  retryLabel,
+  onRetry,
+  secondaryLabel,
+  onSecondaryAction,
+}: ErrorStateProps) {
   const theme = useTheme();
 
   return (
@@ -34,6 +46,11 @@ export function ErrorState({ title, message, retryLabel, onRetry }: ErrorStatePr
       {onRetry ? (
         <View style={{ marginTop: theme.spacing.lg, width: '100%' }}>
           <Button label={retryLabel ?? 'Reintentar'} variant="secondary" onPress={onRetry} />
+        </View>
+      ) : null}
+      {onSecondaryAction ? (
+        <View style={{ marginTop: theme.spacing.sm, width: '100%' }}>
+          <Button label={secondaryLabel ?? 'Cancelar'} variant="ghost" onPress={onSecondaryAction} />
         </View>
       ) : null}
     </View>

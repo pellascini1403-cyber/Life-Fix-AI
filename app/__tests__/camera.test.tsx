@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { router } from 'expo-router';
+import * as Linking from 'expo-linking';
 import React from 'react';
 import { Alert } from 'react-native';
 
@@ -18,6 +19,10 @@ jest.mock('../../src/services/media/pickImageFromGallery', () => ({
   pickImageFromGallery: jest.fn(),
 }));
 
+jest.mock('expo-linking', () => ({
+  openSettings: jest.fn(),
+}));
+
 const mockCanRunAnalysis = jest.fn();
 jest.mock('../../src/services/entitlements/EntitlementsService', () => ({
   entitlementsService: {
@@ -32,7 +37,10 @@ jest.mock('../../src/services/ai', () => ({
   createAIService: () => ({ analyze: (...args: unknown[]) => mockAnalyze(...args) }),
 }));
 
-let mockPermission: { granted: boolean } | null = { granted: true };
+let mockPermission: { granted: boolean; canAskAgain: boolean } | null = {
+  granted: true,
+  canAskAgain: true,
+};
 const mockRequestPermission = jest.fn();
 const mockTakePictureAsync = jest.fn();
 
@@ -69,7 +77,7 @@ async function captureAndReachPreview() {
 describe('CameraScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockPermission = { granted: true };
+    mockPermission = { granted: true, canAskAgain: true };
     useAnalysisSessionStore.setState({
       status: 'idle',
       result: null,
@@ -80,13 +88,33 @@ describe('CameraScreen', () => {
 
   describe('camera permission denied', () => {
     it('shows the permission screen and lets the user request access or cancel', () => {
-      mockPermission = { granted: false };
+      mockPermission = { granted: false, canAskAgain: true };
       renderCamera();
 
       expect(screen.getByText('We need camera access')).toBeTruthy();
 
       fireEvent.press(screen.getByText('Allow access'));
       expect(mockRequestPermission).toHaveBeenCalledTimes(1);
+
+      fireEvent.press(screen.getByText('Cancel'));
+      expect(router.back).toHaveBeenCalledTimes(1);
+    });
+
+    it('offers to open Settings instead of re-prompting once permission is permanently denied', () => {
+      mockPermission = { granted: false, canAskAgain: false };
+      renderCamera();
+
+      expect(screen.getByText('We need this permission')).toBeTruthy();
+      expect(
+        screen.getByText(
+          'You denied this permission and we can no longer ask for it from within the app. You can enable it manually from system Settings.',
+        ),
+      ).toBeTruthy();
+      expect(screen.queryByText('Allow access')).toBeNull();
+
+      fireEvent.press(screen.getByText('Open Settings'));
+      expect(Linking.openSettings).toHaveBeenCalledTimes(1);
+      expect(mockRequestPermission).not.toHaveBeenCalled();
 
       fireEvent.press(screen.getByText('Cancel'));
       expect(router.back).toHaveBeenCalledTimes(1);
@@ -167,7 +195,10 @@ describe('CameraScreen', () => {
     });
 
     it('alerts on a denied gallery permission and stays on the live camera view', async () => {
-      (pickImageFromGallery as jest.Mock).mockResolvedValue({ status: 'permission_denied' });
+      (pickImageFromGallery as jest.Mock).mockResolvedValue({
+        status: 'permission_denied',
+        canAskAgain: true,
+      });
       const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
       renderCamera();
 
@@ -176,10 +207,33 @@ describe('CameraScreen', () => {
       await waitFor(() => {
         expect(alertSpy).toHaveBeenCalledWith(
           'Something went wrong',
-          'To photograph your problem, Resolia needs permission to use the camera.',
+          'To pick an image from your gallery, Resolia needs permission to access your photos.',
         );
       });
       expect(screen.queryByText('Use this photo')).toBeNull();
+    });
+
+    it('offers to open Settings when gallery permission is permanently denied', async () => {
+      (pickImageFromGallery as jest.Mock).mockResolvedValue({
+        status: 'permission_denied',
+        canAskAgain: false,
+      });
+      const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => {
+        const settingsButton = buttons?.find((b) => b.text === 'Open Settings');
+        settingsButton?.onPress?.();
+      });
+      renderCamera();
+
+      fireEvent.press(screen.getByLabelText('Choose from gallery'));
+
+      await waitFor(() => {
+        expect(alertSpy).toHaveBeenCalledWith(
+          'We need this permission',
+          'You denied this permission and we can no longer ask for it from within the app. You can enable it manually from system Settings.',
+          expect.any(Array),
+        );
+      });
+      expect(Linking.openSettings).toHaveBeenCalledTimes(1);
     });
 
     it('alerts on an unexpected gallery error', async () => {

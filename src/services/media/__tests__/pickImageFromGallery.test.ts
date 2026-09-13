@@ -14,12 +14,27 @@ describe('pickImageFromGallery', () => {
     jest.resetAllMocks();
   });
 
-  it('returns permission_denied when the user does not grant gallery access', async () => {
-    mockedPicker.requestMediaLibraryPermissionsAsync.mockResolvedValue({ granted: false } as never);
+  it('returns permission_denied with canAskAgain=true on a transient denial', async () => {
+    mockedPicker.requestMediaLibraryPermissionsAsync.mockResolvedValue({
+      granted: false,
+      canAskAgain: true,
+    } as never);
 
     const result = await pickImageFromGallery();
 
-    expect(result).toEqual({ status: 'permission_denied' });
+    expect(result).toEqual({ status: 'permission_denied', canAskAgain: true });
+    expect(mockedPicker.launchImageLibraryAsync).not.toHaveBeenCalled();
+  });
+
+  it('returns permission_denied with canAskAgain=false once denied permanently', async () => {
+    mockedPicker.requestMediaLibraryPermissionsAsync.mockResolvedValue({
+      granted: false,
+      canAskAgain: false,
+    } as never);
+
+    const result = await pickImageFromGallery();
+
+    expect(result).toEqual({ status: 'permission_denied', canAskAgain: false });
     expect(mockedPicker.launchImageLibraryAsync).not.toHaveBeenCalled();
   });
 

@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { CameraType, CameraView, useCameraPermissions } from 'expo-camera';
 import { router, Stack } from 'expo-router';
+import * as Linking from 'expo-linking';
 import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -46,7 +47,14 @@ export default function CameraScreen() {
     const result = await pickImageFromGallery();
     if (result.status === 'canceled') return;
     if (result.status === 'permission_denied') {
-      Alert.alert(t('errors.genericTitle'), t('camera.permissionBody'));
+      if (result.canAskAgain) {
+        Alert.alert(t('errors.genericTitle'), t('camera.galleryPermissionBody'));
+      } else {
+        Alert.alert(t('camera.permissionBlockedTitle'), t('camera.permissionBlockedBody'), [
+          { text: t('common.cancel'), style: 'cancel' },
+          { text: t('camera.openSettingsCta'), onPress: () => void Linking.openSettings() },
+        ]);
+      }
       return;
     }
     if (result.status === 'error') {
@@ -72,22 +80,27 @@ export default function CameraScreen() {
   }
 
   if (!permission.granted) {
+    const blocked = !permission.canAskAgain;
     return (
       <View style={[styles.permissionContainer, { backgroundColor: theme.colors.background }]}>
         <Stack.Screen options={{ headerShown: false }} />
         <Ionicons name="camera-outline" size={48} color={theme.colors.accent} />
         <Text variant="title2" style={{ marginTop: theme.spacing.md, textAlign: 'center' }}>
-          {t('camera.permissionTitle')}
+          {t(blocked ? 'camera.permissionBlockedTitle' : 'camera.permissionTitle')}
         </Text>
         <Text
           variant="body"
           color="secondary"
           style={{ marginTop: theme.spacing.xs, textAlign: 'center' }}
         >
-          {t('camera.permissionBody')}
+          {t(blocked ? 'camera.permissionBlockedBody' : 'camera.permissionBody')}
         </Text>
         <View style={{ marginTop: theme.spacing.lg, width: '100%' }}>
-          <Button label={t('camera.permissionCta')} onPress={requestPermission} />
+          {blocked ? (
+            <Button label={t('camera.openSettingsCta')} onPress={() => void Linking.openSettings()} />
+          ) : (
+            <Button label={t('camera.permissionCta')} onPress={requestPermission} />
+          )}
         </View>
         <View style={{ marginTop: theme.spacing.sm, width: '100%' }}>
           <Button label={t('common.cancel')} variant="ghost" onPress={() => router.back()} />

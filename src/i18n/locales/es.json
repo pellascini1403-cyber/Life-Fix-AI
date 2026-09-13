@@ -6,7 +6,6 @@
     "save": "Guardar",
     "delete": "Eliminar",
     "close": "Cerrar",
-    "seeAll": "Ver todo",
     "loading": "Cargando…"
   },
   "tabs": {
@@ -56,7 +55,6 @@
     "privacy": "Privacidad",
     "help": "Ayuda",
     "about": "Acerca de Resolia",
-    "signOut": "Cerrar sesión",
     "dailyAnalysesLeft": "{{count}} análisis gratis hoy",
     "dailyAnalysesLeft_one": "{{count}} análisis gratis hoy",
     "dailyAnalysesLeft_other": "{{count}} análisis gratis hoy",
@@ -83,23 +81,23 @@
     "feedbackYes": "Sí",
     "feedbackNo": "No",
     "saveToHistory": "Guardar en historial",
-    "askFollowUp": "Hacer otra pregunta",
-    "retakePhoto": "Sacar otra foto",
-    "professionalRecommended": "Te recomendamos un profesional",
-    "professionalBody": "Este problema puede implicar un riesgo. Te damos una orientación general, pero lo más seguro es que lo revise una persona cualificada.",
     "followUpQuestions": "Nos ayudaría saber",
     "listenToSolution": "Escuchar solución",
     "stopListening": "Detener",
     "listenUnavailable": "No pudimos reproducir el audio en este dispositivo.",
     "explainSimpler": "Explicámelo más fácil",
     "showOriginal": "Ver original",
-    "simplifying": "Simplificando…"
+    "simplifying": "Simplificando…",
+    "simplifyError": "No pudimos simplificar la explicación. Probá de nuevo."
   },
   "camera": {
-    "title": "Analizar problema",
     "permissionTitle": "Necesitamos acceso a la cámara",
     "permissionBody": "Para fotografiar tu problema, Resolia necesita permiso para usar la cámara.",
     "permissionCta": "Permitir acceso",
+    "galleryPermissionBody": "Para elegir una imagen de tu galería, Resolia necesita permiso para acceder a tus fotos.",
+    "permissionBlockedTitle": "Necesitamos este permiso",
+    "permissionBlockedBody": "Denegaste este permiso y ya no podemos volver a pedirlo desde la app. Podés habilitarlo manualmente desde la Configuración del sistema.",
+    "openSettingsCta": "Abrir Configuración",
     "contextPlaceholder": "Contanos qué está pasando (opcional)",
     "shutterHint": "Tocá para tomar la foto",
     "usePhoto": "Usar esta foto",
@@ -109,10 +107,7 @@
   "errors": {
     "genericTitle": "Algo salió mal",
     "genericBody": "No pudimos completar la acción. Probá de nuevo.",
-    "networkTitle": "Sin conexión",
-    "networkBody": "Revisá tu conexión a internet e intentá de nuevo.",
     "cameraUnavailable": "La cámara no está disponible en este dispositivo.",
-    "analysisFailed": "No pudimos analizar la imagen. Intentá con otra foto.",
     "galleryError": "No pudimos abrir la galería. Probá de nuevo.",
     "analysis": {
       "invalidRequest": "Algo en la solicitud no era válido. Probá de nuevo.",

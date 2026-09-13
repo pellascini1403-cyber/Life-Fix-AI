@@ -21,11 +21,35 @@ jest.mock('expo-speech', () => ({
   speak: jest.fn(),
 }));
 
-// ResultScreen records daily usage on mount (already covered by
-// EntitlementsService's own tests); stub it out so its own AsyncStorage
-// write can't race with the save/feedback writes these tests assert on.
+// Daily usage is recorded by useAnalysisSessionStore.runAnalysis on a
+// successful *new* analysis (covered by that store's own tests), and the
+// daily-limit guard (used by the retry button) reads canRunAnalysis — stub
+// both so this file's own AsyncStorage activity can't race with the
+// save/feedback writes these tests assert on.
+const mockCanRunAnalysis = jest.fn().mockResolvedValue(true);
+const mockRecordAnalysisUsed = jest.fn().mockResolvedValue(undefined);
 jest.mock('../../src/services/entitlements/EntitlementsService', () => ({
-  entitlementsService: { recordAnalysisUsed: jest.fn().mockResolvedValue(undefined) },
+  entitlementsService: {
+    recordAnalysisUsed: (...args: unknown[]) => mockRecordAnalysisUsed(...args),
+    canRunAnalysis: (...args: unknown[]) => mockCanRunAnalysis(...args),
+  },
+}));
+
+// A real retry goes through useAnalysisSessionStore.runAnalysis, which calls
+// the real AIService — replace it so a retry test doesn't wait on
+// MockAIService's ~1.4-2.3s simulated delay.
+const mockAnalyze = jest.fn();
+jest.mock('../../src/services/ai', () => ({
+  createAIService: () => ({ analyze: (...args: unknown[]) => mockAnalyze(...args) }),
+}));
+
+const mockSimplify = jest
+  .fn()
+  .mockResolvedValue({ explanation: 'Simplified explanation', steps: ['Simplified step'] });
+jest.mock('../../src/services/simplify', () => ({
+  createSolutionSimplificationService: () => ({
+    simplify: (...args: unknown[]) => mockSimplify(...args),
+  }),
 }));
 
 function buildResult(id: string): AnalysisResult {
@@ -66,7 +90,9 @@ describe('ResultScreen', () => {
       result: buildResult('r1'),
       errorCode: null,
       startCategory: null,
+      lastRequest: null,
     });
+    mockCanRunAnalysis.mockResolvedValue(true);
     useHistoryStore.setState({ entries: [], status: 'idle', error: null });
   });
 
@@ -137,6 +163,19 @@ describe('ResultScreen', () => {
     expect(useHistoryStore.getState().entries[0].feedback).toBeNull();
   });
 
+  describe('daily usage', () => {
+    it('does not record a daily use just from showing an already-ready result (e.g. reopened from History)', async () => {
+      // beforeEach already seeds status: 'ready' the same way History's
+      // showResult() does, without ever calling runAnalysis — the exact
+      // shape of the original double-count bug.
+      renderResultScreen();
+
+      // Give any stray effect a tick to fire before asserting its absence.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(mockRecordAnalysisUsed).not.toHaveBeenCalled();
+    });
+  });
+
   describe('close', () => {
     it('stops any speech, resets the session, and navigates back', () => {
       renderResultScreen();
@@ -165,6 +204,26 @@ describe('ResultScreen', () => {
       await waitFor(() => {
         expect(screen.getByText('Explain it simpler')).toBeTruthy();
       });
+    });
+
+    it('shows an alert and leaves the UI in a consistent state when simplifying fails', async () => {
+      mockSimplify.mockRejectedValueOnce(new Error('boom'));
+      const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+      renderResultScreen();
+
+      fireEvent.press(screen.getByText('Explain it simpler'));
+
+      await waitFor(() => {
+        expect(alertSpy).toHaveBeenCalledWith(
+          'Something went wrong',
+          "We couldn't simplify the explanation. Please try again.",
+        );
+      });
+      // Not stuck on "Simplifying…", and still offering to try again rather
+      // than being stuck showing "Show original" for content that never arrived.
+      expect(screen.queryByText('Simplifying…')).toBeNull();
+      expect(screen.getByText('Explain it simpler')).toBeTruthy();
+      expect(screen.queryByText('Show original')).toBeNull();
     });
   });
 
@@ -204,6 +263,7 @@ describe('ResultScreen', () => {
         errorCode: 'TIMEOUT',
         result: null,
         startCategory: null,
+        lastRequest: { imageUri: 'file://x.jpg' },
       });
       renderResultScreen();
 
@@ -212,6 +272,49 @@ describe('ResultScreen', () => {
       fireEvent.press(screen.getByText('Close'));
 
       expect(router.back).toHaveBeenCalledTimes(1);
+    });
+
+    it('actually re-runs the same analysis when Retry is pressed', async () => {
+      const lastRequest = { imageUri: 'file://x.jpg', userContext: 'It smells odd' };
+      useAnalysisSessionStore.setState({
+        status: 'error',
+        errorCode: 'TIMEOUT',
+        result: null,
+        startCategory: null,
+        lastRequest,
+      });
+      mockAnalyze.mockResolvedValue(buildResult('retried'));
+      renderResultScreen();
+
+      fireEvent.press(screen.getByText('Retry'));
+
+      await waitFor(() => {
+        expect(mockAnalyze).toHaveBeenCalledWith(lastRequest);
+      });
+      await waitFor(() => {
+        expect(useAnalysisSessionStore.getState().status).toBe('ready');
+      });
+      expect(useAnalysisSessionStore.getState().result?.id).toBe('retried');
+    });
+
+    it('does not retry, and shows the limit alert, when the daily limit is reached', async () => {
+      mockCanRunAnalysis.mockResolvedValue(false);
+      useAnalysisSessionStore.setState({
+        status: 'error',
+        errorCode: 'TIMEOUT',
+        result: null,
+        startCategory: null,
+        lastRequest: { imageUri: 'file://x.jpg' },
+      });
+      renderResultScreen();
+
+      fireEvent.press(screen.getByText('Retry'));
+
+      await waitFor(() => {
+        expect(mockCanRunAnalysis).toHaveBeenCalled();
+      });
+      expect(mockAnalyze).not.toHaveBeenCalled();
+      expect(useAnalysisSessionStore.getState().status).toBe('error');
     });
   });
 });

@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { router } from 'expo-router';
+import * as Linking from 'expo-linking';
 import React from 'react';
 import { Alert } from 'react-native';
 
@@ -15,6 +16,10 @@ jest.mock('expo-router', () => ({
 
 jest.mock('../../../src/services/media/pickImageFromGallery', () => ({
   pickImageFromGallery: jest.fn(),
+}));
+
+jest.mock('expo-linking', () => ({
+  openSettings: jest.fn(),
 }));
 
 const mockCanRunAnalysis = jest.fn();
@@ -118,15 +123,46 @@ describe('HomeScreen', () => {
 
   it('alerts on a denied gallery permission instead of navigating', async () => {
     mockCanRunAnalysis.mockResolvedValue(true);
-    (pickImageFromGallery as jest.Mock).mockResolvedValue({ status: 'permission_denied' });
+    (pickImageFromGallery as jest.Mock).mockResolvedValue({
+      status: 'permission_denied',
+      canAskAgain: true,
+    });
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     renderHome();
 
     fireEvent.press(screen.getByText('Choose from gallery'));
 
     await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalled();
+      expect(alertSpy).toHaveBeenCalledWith(
+        'Something went wrong',
+        'To pick an image from your gallery, Resolia needs permission to access your photos.',
+      );
     });
+    expect(router.push).not.toHaveBeenCalled();
+  });
+
+  it('offers to open Settings when gallery permission is permanently denied', async () => {
+    mockCanRunAnalysis.mockResolvedValue(true);
+    (pickImageFromGallery as jest.Mock).mockResolvedValue({
+      status: 'permission_denied',
+      canAskAgain: false,
+    });
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => {
+      const settingsButton = buttons?.find((b) => b.text === 'Open Settings');
+      settingsButton?.onPress?.();
+    });
+    renderHome();
+
+    fireEvent.press(screen.getByText('Choose from gallery'));
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith(
+        'We need this permission',
+        'You denied this permission and we can no longer ask for it from within the app. You can enable it manually from system Settings.',
+        expect.any(Array),
+      );
+    });
+    expect(Linking.openSettings).toHaveBeenCalledTimes(1);
     expect(router.push).not.toHaveBeenCalled();
   });
 

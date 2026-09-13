@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as Speech from 'expo-speech';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,7 +14,7 @@ import {
   TimeIndicator,
 } from '../src/components/results';
 import { Button, Card, ErrorState, LoadingState, Text } from '../src/components/ui';
-import { entitlementsService } from '../src/services/entitlements/EntitlementsService';
+import { useDailyLimitGuard } from '../src/hooks/useDailyLimitGuard';
 import { createSolutionSimplificationService, SimplifiedSolution } from '../src/services/simplify';
 import { useAnalysisSessionStore } from '../src/state/useAnalysisSessionStore';
 import { useHistoryStore } from '../src/state/useHistoryStore';
@@ -29,6 +29,8 @@ export default function ResultScreen() {
   const insets = useSafeAreaInsets();
   const { t, i18n } = useTranslation();
   const { status, result, errorCode, reset } = useAnalysisSessionStore();
+  const retryLastAnalysis = useAnalysisSessionStore((s) => s.retryLastAnalysis);
+  const canRunAnalysis = useDailyLimitGuard();
   const saveToHistory = useHistoryStore((s) => s.save);
   const persistFeedback = useHistoryStore((s) => s.setFeedback);
   const [saved, setSaved] = useState(false);
@@ -37,14 +39,6 @@ export default function ResultScreen() {
   const [isSimplifying, setIsSimplifying] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speechUnavailable, setSpeechUnavailable] = useState(false);
-  const usageRecorded = useRef(false);
-
-  useEffect(() => {
-    if (status === 'ready' && result && !usageRecorded.current) {
-      usageRecorded.current = true;
-      void entitlementsService.recordAnalysisUsed();
-    }
-  }, [status, result]);
 
   // Never let speech keep playing after the user navigates away.
   useEffect(() => () => void Speech.stop(), []);
@@ -53,6 +47,11 @@ export default function ResultScreen() {
     void Speech.stop();
     reset();
     router.back();
+  };
+
+  const retry = async () => {
+    if (!(await canRunAnalysis())) return;
+    await retryLastAnalysis();
   };
 
   const toggleSimplify = async () => {
@@ -67,6 +66,8 @@ export default function ResultScreen() {
     try {
       const solution = await simplificationService.simplify(result);
       setSimplified(solution);
+    } catch {
+      Alert.alert(t('errors.genericTitle'), t('analysis.simplifyError'));
     } finally {
       setIsSimplifying(false);
     }
@@ -111,8 +112,10 @@ export default function ResultScreen() {
         <ErrorState
           title={t('errors.genericTitle')}
           message={errorCode ? getAnalysisErrorMessage(t, errorCode) : t('errors.genericBody')}
-          retryLabel={t('common.close')}
-          onRetry={close}
+          retryLabel={t('common.retry')}
+          onRetry={() => void retry()}
+          secondaryLabel={t('common.close')}
+          onSecondaryAction={close}
         />
       </View>
     );
