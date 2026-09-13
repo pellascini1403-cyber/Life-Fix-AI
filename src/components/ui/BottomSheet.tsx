@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -15,6 +16,7 @@ export interface BottomSheetProps {
 export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -22,7 +24,7 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
         style={[styles.overlay, { backgroundColor: theme.colors.overlay }]}
         onPress={onClose}
         accessibilityRole="button"
-        accessibilityLabel="Cerrar"
+        accessibilityLabel={t('common.close')}
       />
       <View
         style={[

@@ -89,7 +89,11 @@ export default function CameraScreen() {
   if (capturedUri) {
     return (
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-        <Image source={{ uri: capturedUri }} style={styles.preview} />
+        <Image
+          source={{ uri: capturedUri }}
+          accessibilityLabel={t('camera.previewAlt')}
+          style={styles.preview}
+        />
         <View
           style={[
             styles.previewFooter,
@@ -98,6 +102,7 @@ export default function CameraScreen() {
         >
           <Input
             placeholder={t('camera.contextPlaceholder')}
+            accessibilityLabel={t('camera.contextPlaceholder')}
             value={context}
             onChangeText={setContext}
             multiline
@@ -119,6 +124,7 @@ export default function CameraScreen() {
           onPress={() => router.back()}
           accessibilityRole="button"
           accessibilityLabel={t('common.close')}
+          hitSlop={4}
           style={styles.closeButton}
         >
           <Ionicons name="close" size={24} color="#fff" />

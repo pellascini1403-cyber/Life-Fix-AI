@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 
 import { useTheme } from '../../theme';
@@ -25,6 +26,7 @@ export interface ResultCardProps {
  */
 export function ResultCard({ result, onPress, onDelete }: ResultCardProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   return (
     <Card style={styles.card}>
@@ -67,8 +69,7 @@ export function ResultCard({ result, onPress, onDelete }: ResultCardProps) {
         <Pressable
           onPress={onDelete}
           accessibilityRole="button"
-          accessibilityLabel="Eliminar"
-          hitSlop={8}
+          accessibilityLabel={t('common.delete')}
           style={styles.deleteButton}
         >
           <Ionicons name="trash-outline" size={18} color={theme.colors.textTertiary} />
@@ -99,8 +100,12 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     position: 'absolute',
-    top: 10,
-    right: 10,
+    top: -3,
+    right: -3,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
     zIndex: 1,
   },
 });

@@ -78,7 +78,13 @@
     "retakePhoto": "Retake photo",
     "professionalRecommended": "A professional is recommended",
     "professionalBody": "This problem may carry some risk. We can offer general guidance, but it's safest to have a qualified person take a look.",
-    "followUpQuestions": "It would help to know"
+    "followUpQuestions": "It would help to know",
+    "listenToSolution": "Listen to solution",
+    "stopListening": "Stop",
+    "listenUnavailable": "We couldn't play audio on this device.",
+    "explainSimpler": "Explain it simpler",
+    "showOriginal": "Show original",
+    "simplifying": "Simplifying…"
   },
   "camera": {
     "title": "Analyze problem",
@@ -88,7 +94,8 @@
     "contextPlaceholder": "Tell us what's going on (optional)",
     "shutterHint": "Tap to take the photo",
     "usePhoto": "Use this photo",
-    "retake": "Retake"
+    "retake": "Retake",
+    "previewAlt": "Photo you took of the problem"
   },
   "errors": {
     "genericTitle": "Something went wrong",

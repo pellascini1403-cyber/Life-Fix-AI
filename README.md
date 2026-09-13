@@ -14,18 +14,32 @@ This is a real, production-track codebase, not a prototype: strict
 TypeScript, a modular service layer, and an architecture designed to reach
 the App Store and Google Play — not a demo meant to be thrown away.
 
-## Status: Phase 2
+## Status: Phase 5
 
 Phase 1 built the foundation (navigation, design system, screens,
-component library). **Phase 2 adds a real backend and a real AI
-provider**: `POST /analyze` (an Expo Router API route) now receives the
-photo, calls Anthropic's Claude with a specialized system prompt, validates
-its structured JSON output against a strict schema, runs a backend-side
-safety policy on top of it, and returns the same `AnalysisResult` shape the
-UI already renders — `RemoteAIService` is the app's default `AIService`
-now, not a stub. See [What's implemented](#whats-implemented--whats-not)
-for the precise, current line between what's real and what's still a
-documented gap.
+component library). Phase 2 added a real backend and a real AI provider
+(`POST /analyze`, Anthropic's Claude, a backend-side safety policy) —
+fully built, and still there, but **not the active default right now**:
+per an explicit, cost-conscious product decision, development runs against
+`MockAIService` (simulated data, zero network calls, zero cost) until
+we're ready to pay for real AI usage. See "Developing without any external
+cost" below. **Phase 5 adds two delight/accessibility features that work
+entirely offline** — "Explicámelo más fácil" (a rule-based, zero-cost text
+simplifier) and "Escuchar solución" (on-device text-to-speech via
+`expo-speech`) — plus an accessibility pass across every screen. See
+[What's implemented](#whats-implemented--whats-not) for the precise,
+current line between what's real and what's still a documented gap.
+
+### Developing without any external cost
+
+`createAIService()` (`src/services/ai/index.ts`) defaults to
+`MockAIService` — no network call, no AI provider, no cost. The real
+backend from Phase 2 (`POST /analyze`, `backend/**`, `RemoteAIService`,
+Anthropic's Claude) is fully built and unchanged; it's just not the
+default path. To opt into it later (this **will** incur real Anthropic API
+cost): set `EXPO_PUBLIC_USE_REMOTE_AI=true` and `ANTHROPIC_API_KEY` in
+`.env`. No payment/billing/subscription/paywall integration exists or is
+active anywhere in this codebase.
 
 ## Architecture
 
@@ -137,9 +151,10 @@ sites:
 
 | Interface | Purpose | Current implementation |
 |---|---|---|
-| `AIService` | photo (+context) → `AnalysisResult` | **`RemoteAIService` (default)** — calls `POST /analyze`, the real backend. `MockAIService` remains available (canned data, no network) for offline dev/tests — set `EXPO_PUBLIC_USE_REMOTE_AI=false` to use it; there is no automatic silent fallback to it if the real backend is misconfigured |
-| `VisionAnalysisProvider` (`backend/aiProvider/`) | image + context → structured provider JSON | `AnthropicVisionProvider` (Claude, via `@anthropic-ai/sdk`) — server-only |
+| `AIService` | photo (+context) → `AnalysisResult` | **`MockAIService` (default)** — simulated data, zero cost. `RemoteAIService` (calls the real `POST /analyze` backend) is fully built and available — set `EXPO_PUBLIC_USE_REMOTE_AI=true` to opt in (incurs real Anthropic cost); there is no automatic silent fallback either direction |
+| `VisionAnalysisProvider` (`backend/aiProvider/`) | image + context → structured provider JSON | `AnthropicVisionProvider` (Claude, via `@anthropic-ai/sdk`) — server-only, built but only reachable when `RemoteAIService` is opted into |
 | `RateLimiter` (`backend/rateLimit/`) | abuse/cost guard for `/analyze` | `InMemoryRateLimiter` — **structurally complete and unit-tested, but currently a no-op in practice**; see "What's implemented / what's not" |
+| `SolutionSimplificationService` (`src/services/simplify/`) | rewrite a result's text in plainer language | `LocalSolutionSimplificationService` — rule-based word substitution + safe sentence splitting, zero cost. Powers "Explicámelo más fácil" |
 | `AuthService` | current user, sign in/out | `AnonymousAuthService` (local, in-memory) |
 | `EntitlementsService` | plan, daily-use limits | `LocalEntitlementsService` (in-memory, `free` plan only) |
 | `AnalyticsService` | event tracking | `NoopAnalyticsService` |
@@ -171,6 +186,8 @@ seam it plugs into.
 - **i18next / react-i18next** for i18n (Spanish default, English), no
   hardcoded UI strings — see `src/i18n/locales/`.
 - **expo-camera** / **expo-image-picker** for capture.
+- **expo-speech** for on-device, zero-cost text-to-speech ("Escuchar
+  solución") — no account, no API key, no network call.
 - **@react-native-async-storage/async-storage** for local history
   persistence.
 - **Expo Router API routes** (`+api.ts`) for the backend — same repo, same
@@ -219,6 +236,7 @@ src/
     analytics/             AnalyticsService interface + NoopAnalyticsService
     api/                   ApiClient (backend HTTP client)
     device/                Local device-id (used as the rate-limit key)
+    simplify/              SolutionSimplificationService + LocalSolutionSimplificationService
     history/               HistoryRepository interface + AsyncStorage impl
   safety/                  RiskClassifier (shared by client and backend)
   state/                   Zustand stores
@@ -254,8 +272,8 @@ from `app/analyze+api.ts`) and is safe for real secrets.
 | Var | Where | Default | Purpose |
 |---|---|---|---|
 | `EXPO_PUBLIC_API_URL` | client | *(empty → relative)* | Backend base URL. Empty resolves as a relative path against the app's own origin, which is correct for web and for native during development (same Metro dev server serves both). Set to an absolute URL only for a native production build talking to a separately hosted backend |
-| `EXPO_PUBLIC_USE_REMOTE_AI` | client | *(unset → real backend)* | Set to `"false"` to use `MockAIService` instead (offline dev/tests). Any other value uses the real backend |
-| `ANTHROPIC_API_KEY` | server | *(none)* | **Required** for real analyses. Without it, `POST /analyze` returns `503 PROVIDER_NOT_CONFIGURED` — verified by hand (see below) — never a fabricated result |
+| `EXPO_PUBLIC_USE_REMOTE_AI` | client | `false` (unset also means false) | Set to `"true"` to opt into the real backend (`RemoteAIService`) — **this will incur real Anthropic API cost**. Defaults to `MockAIService`: no network, no cost |
+| `ANTHROPIC_API_KEY` | server | *(none)* | Only read when `EXPO_PUBLIC_USE_REMOTE_AI=true`. Without it, `POST /analyze` returns `503 PROVIDER_NOT_CONFIGURED` — verified by hand (see below) — never a fabricated result |
 | `ANTHROPIC_MODEL` | server | `claude-opus-5` | Override the model used for analysis |
 | `RATE_LIMIT_PER_MINUTE` / `RATE_LIMIT_PER_DAY` | server | `8` / `60` | Abuse/cost guardrails — see the rate-limiting caveat below before relying on these |
 | `ANALYSIS_TIMEOUT_MS` | server | `45000` | Max time to wait on the AI provider before failing with `TIMEOUT` |
@@ -270,13 +288,8 @@ from `app/analyze+api.ts`) and is safe for real secrets.
   validates the AI's structured JSON output against a strict `zod` schema,
   runs an independent backend-side safety policy on top of the model's own
   classification, and returns the app's existing `AnalysisResult` shape —
-  no client-visible schema change.
-- **`RemoteAIService` is the default `AIService`** — verified end-to-end in
-  a real browser: Home → camera capture → `POST /analyze` → a real (non-2xx,
-  since no key is configured in this environment) response → mapped to a
-  `ClientAnalysisError` → shown as "We're having trouble analyzing this
-  image. Try again in a few seconds." — not a crash, not a fabricated
-  result. `MockAIService` still exists for offline dev/tests.
+  fully built, currently **not the active default** (see "Developing
+  without any external cost" above).
 - **The secret boundary holds** — verified by hand, not just asserted:
   exporting the app (`expo export`, both iOS and web) confirms `anthropic`
   and `ANTHROPIC_API_KEY` appear zero times in the client bundle, and only
@@ -288,6 +301,37 @@ from `app/analyze+api.ts`) and is safe for real secrets.
   unknown), never a raw technical message shown to the user.
 - `followUpQuestions` — a genuinely new field end to end (schema → mapping
   → UI card) for when the AI needs more information instead of guessing.
+- **"Explicámelo más fácil"** — `LocalSolutionSimplificationService`
+  rewrites a result's explanation and steps in plainer language (jargon
+  substitution + splitting long compound sentences at a safe conjunction
+  boundary), toggled live on the result screen with no loading delay and
+  no network call. Fully unit-tested
+  (`src/services/simplify/__tests__/`), including the specific bug it
+  caught along the way — see below.
+- **"Escuchar solución"** — reads the problem + steps aloud via
+  `expo-speech` (on-device TTS, no account, no cost), with a Stop toggle
+  and a graceful, localized "couldn't play audio" message if the device
+  has no TTS voices available (verified: this exact path triggers in this
+  sandbox's headless browser, which has no TTS engine, and the UI recovers
+  cleanly instead of getting stuck).
+- **An accessibility pass** across every screen and shared component,
+  driven by a dedicated audit: added `accessibilityRole="header"` to page
+  titles, fixed two hardcoded-Spanish `accessibilityLabel`s that broke
+  under the English locale (`BottomSheet`'s close button, `ResultCard`'s
+  delete button — both now route through `t()`), added labels to
+  previously-unlabeled images (captured photo in both `camera.tsx` and
+  `result.tsx`), gave `LoadingState` a default label instead of a silent
+  one when no message is passed, and enlarged three touch targets that
+  were under the ~44×44 minimum (`ResultCard`'s delete button, and the
+  close buttons on `camera.tsx`/`result.tsx`).
+
+**A real bug the simplifier's own tests caught:** the first version of
+`substituteWords` used `\bword\b` regex boundaries, which silently never
+match Spanish words ending in an accented vowel (`\b` treats `á`/`é`/etc.
+as non-word characters, so `\bverificá\b` never matches "Verificá ") — a
+test written against real app content caught it immediately, and the fix
+(tokenizing on letter runs instead of `\b`) is in
+`LocalSolutionSimplificationService.ts`.
 
 **Structurally complete, but with a known, verified limitation:**
 - **Rate limiting.** `RateLimiter` (interface) + `InMemoryRateLimiter`
@@ -300,29 +344,32 @@ from `app/analyze+api.ts`) and is safe for real secrets.
   row) behind the same `RateLimiter` interface to actually enforce
   anything, in dev or in a serverless-style production deployment. See
   `backend/rateLimit/RateLimiter.ts` for the detail and ROADMAP for this as
-  an open item — **this is the one piece of this phase that isn't fully
-  functional yet, only fully specified and tested in isolation.**
+  an open item.
 
 **Explicitly NOT implemented yet** (by design, per the phased plan):
 - Real authentication (`AnonymousAuthService` is a local-only stand-in);
   the `X-Device-Id` header used for rate limiting is a local random id, not
   an authenticated identity.
-- Real payments/subscriptions (RevenueCat/StoreKit/Play Billing) and ads.
-- "Explicámelo más fácil" and "Escuchar solución" accessibility features.
+- **No payments, subscriptions, billing, or paywall** — none integrated,
+  none active, per explicit product direction to avoid any external cost
+  right now.
 - Push notifications, analytics provider, persistent image storage.
-- EAS Hosting / production deployment of the backend (this phase runs it
-  via the Expo dev server; deploying it for real native builds is next).
+- EAS Hosting / production deployment of the backend (it currently only
+  runs via the Expo dev server; deploying it for real native builds is
+  still ahead, and only relevant once real AI usage is turned back on).
 
 ## Next steps
 
-1. **Set `ANTHROPIC_API_KEY`** (see .env.example) — this is the one
-   external credential needed to make real analyses work; everything else
-   in this phase is already built and wired up against it.
+1. Decide when/how to turn real AI analysis back on (see "Developing
+   without any external cost") — nothing else needs to change in the code
+   for that switch; `RemoteAIService` and the backend are already built
+   and were verified working (Phase 2) before this cost-conscious pause.
 2. Back the rate limiter with a durable store so it actually enforces
-   limits (see the caveat above).
+   limits (see the caveat above) — relevant once real AI usage resumes.
 3. Real auth provider decision + implementation behind `AuthService`, and
    reconcile the device-id rate-limit key with a real user identity.
-4. Payments integration behind `EntitlementsService`.
+4. Payments integration behind `EntitlementsService` — still explicitly
+   out of scope until the product/business side decides otherwise.
 5. EAS Hosting (or equivalent) deployment of the backend for native
    production builds, plus EAS Build configuration and a first
    TestFlight/Play internal test track.

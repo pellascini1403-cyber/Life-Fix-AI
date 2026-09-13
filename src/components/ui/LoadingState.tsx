@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { useTheme } from '../../theme';
@@ -12,9 +13,14 @@ export interface LoadingStateProps {
 /** Full-bleed loading placeholder for a screen or section. */
 export function LoadingState({ message, hint }: LoadingStateProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   return (
-    <View style={styles.container} accessibilityRole="progressbar" accessibilityLabel={message}>
+    <View
+      style={styles.container}
+      accessibilityRole="progressbar"
+      accessibilityLabel={message ?? t('common.loading')}
+    >
       <ActivityIndicator size="large" color={theme.colors.accent} />
       {message ? (
         <Text variant="bodyStrong" style={{ marginTop: theme.spacing.md, textAlign: 'center' }}>

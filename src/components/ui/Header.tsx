@@ -29,7 +29,9 @@ export function Header({ title, subtitle, right }: HeaderProps) {
     >
       <View style={styles.row}>
         <View style={styles.titleBlock}>
-          <Text variant="title1">{title}</Text>
+          <Text variant="title1" accessibilityRole="header">
+            {title}
+          </Text>
           {subtitle ? (
             <Text variant="callout" color="secondary" style={{ marginTop: 2 }}>
               {subtitle}
