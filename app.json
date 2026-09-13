@@ -11,6 +11,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "ai.resolia.app",
+      "buildNumber": "1",
       "infoPlist": {
         "NSCameraUsageDescription": "Resolia necesita la cámara para fotografiar el problema que querés resolver.",
         "NSPhotoLibraryUsageDescription": "Resolia necesita acceso a tus fotos para analizar una imagen que ya tenés guardada."
@@ -25,6 +26,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "ai.resolia.app",
+      "versionCode": 1,
       "permissions": ["CAMERA", "READ_MEDIA_IMAGES"]
     },
     "web": {
