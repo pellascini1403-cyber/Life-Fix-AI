@@ -2,10 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { CameraType, CameraView, useCameraPermissions } from 'expo-camera';
 import { router, Stack } from 'expo-router';
 import * as Linking from 'expo-linking';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Alert,
+  AppState,
   Image,
   Pressable,
   StyleSheet,
@@ -23,15 +24,28 @@ export default function CameraScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
-  const [permission, requestPermission] = useCameraPermissions();
+  const [permission, requestPermission, getCameraPermission] = useCameraPermissions();
   const [facing] = useState<CameraType>('back');
   const [capturedUri, setCapturedUri] = useState<string | null>(null);
   const [context, setContext] = useState('');
+  const [isConfirming, setIsConfirming] = useState(false);
   const cameraRef = useRef<CameraView>(null);
 
   const startCategory = useAnalysisSessionStore((s) => s.startCategory);
   const runAnalysis = useAnalysisSessionStore((s) => s.runAnalysis);
   const canRunAnalysis = useDailyLimitGuard();
+
+  // useCameraPermissions() only re-checks on mount/on explicit
+  // requestPermission() — it never notices on its own that the user left
+  // for Settings (via the button below) and granted access there. Without
+  // this, coming back from Settings would still show the blocked screen.
+  useEffect(() => {
+    if (permission?.granted) return;
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') void getCameraPermission();
+    });
+    return () => subscription.remove();
+  }, [permission?.granted, getCameraPermission]);
 
   const handleCapture = async () => {
     if (!cameraRef.current) return;
@@ -65,8 +79,12 @@ export default function CameraScreen() {
   };
 
   const confirmPhoto = async () => {
-    if (!capturedUri) return;
-    if (!(await canRunAnalysis())) return;
+    if (!capturedUri || isConfirming) return;
+    setIsConfirming(true);
+    if (!(await canRunAnalysis())) {
+      setIsConfirming(false);
+      return;
+    }
     router.replace('/result');
     void runAnalysis({
       imageUri: capturedUri,
@@ -82,7 +100,17 @@ export default function CameraScreen() {
   if (!permission.granted) {
     const blocked = !permission.canAskAgain;
     return (
-      <View style={[styles.permissionContainer, { backgroundColor: theme.colors.background }]}>
+      <View
+        style={[
+          styles.permissionContainer,
+          {
+            backgroundColor: theme.colors.background,
+            width: '100%',
+            maxWidth: theme.layout.maxContentWidth,
+            alignSelf: 'center',
+          },
+        ]}
+      >
         <Stack.Screen options={{ headerShown: false }} />
         <Ionicons name="camera-outline" size={48} color={theme.colors.accent} />
         <Text variant="title2" style={{ marginTop: theme.spacing.md, textAlign: 'center' }}>
@@ -120,7 +148,13 @@ export default function CameraScreen() {
         <View
           style={[
             styles.previewFooter,
-            { paddingBottom: insets.bottom + theme.spacing.md, backgroundColor: theme.colors.background },
+            {
+              paddingBottom: insets.bottom + theme.spacing.md,
+              backgroundColor: theme.colors.background,
+              width: '100%',
+              maxWidth: theme.layout.maxContentWidth,
+              alignSelf: 'center',
+            },
           ]}
         >
           <Input
@@ -131,9 +165,14 @@ export default function CameraScreen() {
             multiline
           />
           <View style={{ height: theme.spacing.sm }} />
-          <Button label={t('camera.usePhoto')} onPress={confirmPhoto} />
+          <Button label={t('camera.usePhoto')} onPress={confirmPhoto} loading={isConfirming} />
           <View style={{ height: theme.spacing.xs }} />
-          <Button label={t('camera.retake')} variant="ghost" onPress={() => setCapturedUri(null)} />
+          <Button
+            label={t('camera.retake')}
+            variant="ghost"
+            onPress={() => setCapturedUri(null)}
+            disabled={isConfirming}
+          />
         </View>
       </View>
     );

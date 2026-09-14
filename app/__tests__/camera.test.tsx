@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react-nativ
 import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
 import React from 'react';
-import { Alert } from 'react-native';
+import { Alert, AppState } from 'react-native';
 
 import '../../src/i18n';
 import CameraScreen from '../camera';
@@ -42,6 +42,7 @@ let mockPermission: { granted: boolean; canAskAgain: boolean } | null = {
   canAskAgain: true,
 };
 const mockRequestPermission = jest.fn();
+const mockGetCameraPermission = jest.fn();
 const mockTakePictureAsync = jest.fn();
 
 jest.mock('expo-camera', () => {
@@ -53,7 +54,7 @@ jest.mock('expo-camera', () => {
       }));
       return null;
     }),
-    useCameraPermissions: () => [mockPermission, mockRequestPermission],
+    useCameraPermissions: () => [mockPermission, mockRequestPermission, mockGetCameraPermission],
   };
 });
 
@@ -119,6 +120,27 @@ describe('CameraScreen', () => {
       fireEvent.press(screen.getByText('Cancel'));
       expect(router.back).toHaveBeenCalledTimes(1);
     });
+
+    it('re-checks camera permission when the app returns to foreground (e.g. from Settings)', () => {
+      mockPermission = { granted: false, canAskAgain: true };
+      const addEventListenerSpy = jest.spyOn(AppState, 'addEventListener');
+      renderCamera();
+
+      const changeHandler = addEventListenerSpy.mock.calls.find(([event]) => event === 'change')?.[1];
+      expect(changeHandler).toBeDefined();
+
+      changeHandler?.('active');
+
+      expect(mockGetCameraPermission).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not subscribe to app-state changes once permission is already granted', () => {
+      mockPermission = { granted: true, canAskAgain: true };
+      const addEventListenerSpy = jest.spyOn(AppState, 'addEventListener');
+      renderCamera();
+
+      expect(addEventListenerSpy).not.toHaveBeenCalledWith('change', expect.any(Function));
+    });
   });
 
   describe('capture -> preview -> confirm', () => {
@@ -142,6 +164,27 @@ describe('CameraScreen', () => {
           expect.objectContaining({ imageUri: 'file://captured.jpg' }),
         );
       });
+    });
+
+    it('ignores a second rapid tap on "Use this photo" while the first confirm is still in flight', async () => {
+      let resolveCanRun!: (value: boolean) => void;
+      mockCanRunAnalysis.mockReturnValue(
+        new Promise<boolean>((resolve) => {
+          resolveCanRun = resolve;
+        }),
+      );
+      await captureAndReachPreview();
+
+      const useButton = screen.getByText('Use this photo');
+      fireEvent.press(useButton);
+      fireEvent.press(useButton);
+
+      resolveCanRun(true);
+      await waitFor(() => {
+        expect(router.replace).toHaveBeenCalledWith('/result');
+      });
+      expect(mockCanRunAnalysis).toHaveBeenCalledTimes(1);
+      expect(router.replace).toHaveBeenCalledTimes(1);
     });
 
     it('does not confirm or navigate when the daily limit is reached', async () => {

@@ -27,7 +27,13 @@ export default function AboutScreen() {
         }
       />
       <ScrollView
-        contentContainerStyle={{ padding: theme.spacing.lg, gap: theme.spacing.md }}
+        contentContainerStyle={{
+          padding: theme.spacing.lg,
+          gap: theme.spacing.md,
+          width: '100%',
+          maxWidth: theme.layout.maxContentWidth,
+          alignSelf: 'center',
+        }}
         showsVerticalScrollIndicator={false}
       >
         <Card>

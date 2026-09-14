@@ -39,6 +39,7 @@ export default function ResultScreen() {
   const [isSimplifying, setIsSimplifying] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speechUnavailable, setSpeechUnavailable] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   // Never let speech keep playing after the user navigates away.
   useEffect(() => () => void Speech.stop(), []);
@@ -50,8 +51,14 @@ export default function ResultScreen() {
   };
 
   const retry = async () => {
-    if (!(await canRunAnalysis())) return;
-    await retryLastAnalysis();
+    if (isRetrying) return;
+    setIsRetrying(true);
+    try {
+      if (!(await canRunAnalysis())) return;
+      await retryLastAnalysis();
+    } finally {
+      setIsRetrying(false);
+    }
   };
 
   const toggleSimplify = async () => {
@@ -114,6 +121,7 @@ export default function ResultScreen() {
           message={errorCode ? getAnalysisErrorMessage(t, errorCode) : t('errors.genericBody')}
           retryLabel={t('common.retry')}
           onRetry={() => void retry()}
+          retryLoading={isRetrying}
           secondaryLabel={t('common.close')}
           onSecondaryAction={close}
         />
@@ -159,6 +167,9 @@ export default function ResultScreen() {
           padding: theme.spacing.lg,
           paddingBottom: insets.bottom + theme.spacing.xl,
           gap: theme.spacing.md,
+          width: '100%',
+          maxWidth: theme.layout.maxContentWidth,
+          alignSelf: 'center',
         }}
         showsVerticalScrollIndicator={false}
       >

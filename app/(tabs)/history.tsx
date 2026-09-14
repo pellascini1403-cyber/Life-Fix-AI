@@ -95,7 +95,13 @@ export default function HistoryScreen() {
         <FlatList
           data={entries}
           keyExtractor={(item) => item.result.id}
-          contentContainerStyle={{ padding: theme.spacing.lg, gap: theme.spacing.sm }}
+          contentContainerStyle={{
+            padding: theme.spacing.lg,
+            gap: theme.spacing.sm,
+            width: '100%',
+            maxWidth: theme.layout.maxContentWidth,
+            alignSelf: 'center',
+          }}
           renderItem={({ item }) => (
             <ResultCard
               result={item.result}

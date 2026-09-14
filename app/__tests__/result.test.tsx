@@ -297,6 +297,34 @@ describe('ResultScreen', () => {
       expect(useAnalysisSessionStore.getState().result?.id).toBe('retried');
     });
 
+    it('ignores a second rapid tap on Retry while the first attempt is still in flight', async () => {
+      let resolveCanRun!: (value: boolean) => void;
+      mockCanRunAnalysis.mockReturnValue(
+        new Promise<boolean>((resolve) => {
+          resolveCanRun = resolve;
+        }),
+      );
+      useAnalysisSessionStore.setState({
+        status: 'error',
+        errorCode: 'TIMEOUT',
+        result: null,
+        startCategory: null,
+        lastRequest: { imageUri: 'file://x.jpg' },
+      });
+      mockAnalyze.mockResolvedValue(buildResult('retried'));
+      renderResultScreen();
+
+      const retryButton = screen.getByText('Retry');
+      fireEvent.press(retryButton);
+      fireEvent.press(retryButton);
+
+      resolveCanRun(true);
+      await waitFor(() => {
+        expect(mockAnalyze).toHaveBeenCalledTimes(1);
+      });
+      expect(mockCanRunAnalysis).toHaveBeenCalledTimes(1);
+    });
+
     it('does not retry, and shows the limit alert, when the daily limit is reached', async () => {
       mockCanRunAnalysis.mockResolvedValue(false);
       useAnalysisSessionStore.setState({

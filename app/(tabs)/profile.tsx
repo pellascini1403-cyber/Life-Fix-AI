@@ -64,7 +64,13 @@ export default function ProfileScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Header title={t('profile.title')} />
       <ScrollView
-        contentContainerStyle={{ padding: theme.spacing.lg, gap: theme.spacing.lg }}
+        contentContainerStyle={{
+          padding: theme.spacing.lg,
+          gap: theme.spacing.lg,
+          width: '100%',
+          maxWidth: theme.layout.maxContentWidth,
+          alignSelf: 'center',
+        }}
         showsVerticalScrollIndicator={false}
       >
         <Card>

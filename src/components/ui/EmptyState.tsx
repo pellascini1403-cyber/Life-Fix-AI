@@ -24,7 +24,12 @@ export function EmptyState({
   const theme = useTheme();
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        { width: '100%', maxWidth: theme.layout.maxContentWidth, alignSelf: 'center' },
+      ]}
+    >
       <View
         style={[
           styles.iconWrap,

@@ -55,7 +55,13 @@ export default function HomeScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Header title={t('common.appName')} />
       <ScrollView
-        contentContainerStyle={{ padding: theme.spacing.lg, gap: theme.spacing.lg }}
+        contentContainerStyle={{
+          padding: theme.spacing.lg,
+          gap: theme.spacing.lg,
+          width: '100%',
+          maxWidth: theme.layout.maxContentWidth,
+          alignSelf: 'center',
+        }}
         showsVerticalScrollIndicator={false}
       >
         <View>
@@ -130,7 +136,11 @@ export default function HomeScreen() {
                       size={22}
                       color={theme.colors.accent}
                     />
-                    <Text variant="footnote" style={{ marginTop: 8 }} numberOfLines={1}>
+                    <Text
+                      variant="footnote"
+                      style={{ marginTop: 8, textAlign: 'center' }}
+                      numberOfLines={2}
+                    >
                       {t(`home.category.${category}`)}
                     </Text>
                   </View>
